@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mulah Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <div>
+                <h1>Mulah</h1>
+                <p>AI-powered financial command center</p>
+            </div>
+            <div class="hero-actions">
+                <button id="refreshBtn">Refresh Data</button>
+            </div>
+        </header>
+
+        <section class="cards">
+            <div class="card">
+                <h3>Income Total</h3>
+                <p id="incomeTotal">--</p>
+            </div>
+            <div class="card">
+                <h3>Expense Total</h3>
+                <p id="expenseTotal">--</p>
+            </div>
+            <div class="card">
+                <h3>Net Cashflow</h3>
+                <p id="netCashflow">--</p>
+            </div>
+            <div class="card">
+                <h3>Savings Rate</h3>
+                <p id="savingsRate">--</p>
+            </div>
+            <div class="card accent">
+                <h3>Mulah Score</h3>
+                <p id="mulahScore">--</p>
+            </div>
+            <div class="card accent">
+                <h3>Risk Level</h3>
+                <p id="riskLevel">--</p>
+            </div>
+        </section>
+
+        <section class="grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Detected Subscriptions</h2>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Merchant</th>
+                                <th>Avg Amount</th>
+                                <th>Cycle</th>
+                                <th>Next Billing</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriptionsTable">
+                            <tr><td colspan="5">No data yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Category Breakdown</h2>
+                </div>
+                <div id="categoryBreakdown" class="stack-list">
+                    <div class="empty">No data yet</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Recurring Analysis</h2>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Merchant</th>
+                            <th>Type</th>
+                            <th>Avg Amount</th>
+                            <th>Avg Interval</th>
+                            <th>Recurring Confidence</th>
+                            <th>Classification Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysisTable">
+                        <tr><td colspan="6">No data yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
