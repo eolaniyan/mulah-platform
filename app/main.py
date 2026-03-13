@@ -7,6 +7,7 @@ from app.db.database import Base, engine
 from app.api.transactions import router as transactions_router
 from app.api.subscriptions import router as subscriptions_router
 from app.api.insights import router as insights_router
+from app.api.demo import router as demo_router
 from app.models import *
 
 Base.metadata.create_all(bind=engine)
@@ -19,6 +20,7 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(transactions_router)
 app.include_router(subscriptions_router)
 app.include_router(insights_router)
+app.include_router(demo_router)
 
 
 @app.get("/")

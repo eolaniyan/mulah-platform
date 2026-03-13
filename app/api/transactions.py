@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionResponse
+from app.schemas.dashboard import DashboardUploadResponse
 from app.services.transaction_ingestion import ingest_csv
+from app.services.subscription_engine import extract_subscriptions
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -29,3 +31,23 @@ async def upload_transactions(file: UploadFile = File(...), db: Session = Depend
 
     result = ingest_csv(file_path=file_path, db=db)
     return result
+
+
+@router.post("/upload-and-process", response_model=DashboardUploadResponse)
+async def upload_and_process(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV uploads are supported in MVP")
+
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+
+    result = ingest_csv(file_path=file_path, db=db)
+    detection = extract_subscriptions(db)
+
+    return {
+        "uploaded": True,
+        "filename": file.filename,
+        "inserted": result.get("inserted", 0),
+        "detected_subscriptions": detection.get("detected_subscriptions", 0),
+    }

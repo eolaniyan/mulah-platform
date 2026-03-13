@@ -12,6 +12,7 @@ KNOWN_SUBSCRIPTIONS = {
     "disney+": "subscription",
     "amazon prime": "subscription",
     "icloud": "subscription",
+    "adobe": "subscription",
 }
 
 KNOWN_BILLS = {
