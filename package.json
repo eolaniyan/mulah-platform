@@ -11,6 +11,8 @@
     "dev:finance-web": "pnpm --dir apps/finance-web dev",
     "dev:finance-mobile": "pnpm --dir apps/finance-mobile start",
     "dev:signals": "pnpm --dir apps/signals dev",
+    "dev:subscription-web": "pnpm --dir apps/subscription-web dev",
+    "dev:invoice-web": "pnpm --dir apps/invoice-web dev",
     "dev:api": "echo \"define service-specific dev command\"",
     "lint": "echo \"define workspace lint\"",
     "test": "echo \"define workspace test\""

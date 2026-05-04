@@ -6,6 +6,8 @@ Canonical Mulah monorepo.
 - apps/finance-web (flagship)
 - apps/finance-mobile
 - apps/signals (investing)
+- apps/subscription-web
+- apps/invoice-web
 - services/api (shared backend)
 - packages/* (shared foundation)
 - docs/decisions/ADR-0002-product-boundaries.md (source of truth)
