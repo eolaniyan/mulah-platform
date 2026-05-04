@@ -2,20 +2,23 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, FlatList } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { cardsApi } from '../lib/api';
+import { useVirtualCards } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
-import type { VirtualCard } from '../types';
 
 export default function VirtualCardsScreen() {
   const navigation = useNavigation<any>();
 
-  const { data: cards = [], isLoading } = useQuery<VirtualCard[]>({
-    queryKey: ['virtual-cards'],
-    queryFn: () => cardsApi.getAll().then(r => r.data),
-  });
+  const { data: rawCards = [], isLoading } = useVirtualCards();
+  const cards = rawCards.map((c) => ({
+    id: c.id,
+    lastFour: c.last4,
+    expiryMonth: 12,
+    expiryYear: 2030,
+    spendingLimit: c.spendingLimit ?? undefined,
+    isFrozen: c.status !== 'active',
+  }));
 
-  const renderCard = ({ item }: { item: VirtualCard }) => (
+  const renderCard = ({ item }: { item: (typeof cards)[number] }) => (
     <View style={styles.cardItem}>
       <LinearGradient
         colors={item.isFrozen ? [colors.gray[600], colors.gray[700]] : [colors.teal[500], colors.teal[600]]}

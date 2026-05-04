@@ -3,21 +3,18 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { analyticsApi, configApi } from '../lib/api';
+import { useAnalyticsSummary, configApi } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
-import type { Analytics, USWConfig } from '../types';
+import type { USWConfig } from '../types';
 
 export default function USWScreen() {
   const navigation = useNavigation<any>();
 
-  const { data: analytics } = useQuery<Analytics>({
-    queryKey: ['analytics'],
-    queryFn: () => analyticsApi.getSummary().then(r => r.data),
-  });
+  const { data: analytics } = useAnalyticsSummary();
 
   const { data: config } = useQuery({
-    queryKey: ['config'],
-    queryFn: () => configApi.get().then(r => r.data),
+    queryKey: ['/api/config'],
+    queryFn: () => configApi.get(),
   });
 
   const uswConfig: USWConfig = config?.usw_fees || {
@@ -29,7 +26,7 @@ export default function USWScreen() {
     maxNonPremiumCharge: 200,
   };
 
-  const monthlyTotal = analytics?.monthlyTotal || 0;
+  const monthlyTotal = analytics?.monthlyTotal ?? 0;
   const baseFee = uswConfig.baseFee;
   const percentageFee = monthlyTotal * uswConfig.percentageFee;
   const totalFee = baseFee + percentageFee;

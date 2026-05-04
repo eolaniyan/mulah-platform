@@ -11,6 +11,7 @@
 
 let API_BASE_URL = "";
 let tokenProvider: (() => Promise<string | null>) | null = null;
+let onUnauthorized: (() => void | Promise<void>) | null = null;
 
 export function setApiBaseUrl(url: string) {
   API_BASE_URL = url.replace(/\/$/, "");
@@ -18,6 +19,11 @@ export function setApiBaseUrl(url: string) {
 
 export function setTokenProvider(provider: () => Promise<string | null>) {
   tokenProvider = provider;
+}
+
+/** React Native: clear SecureStore (or similar) when any request returns 401 */
+export function setUnauthorizedHandler(handler: (() => void | Promise<void>) | null) {
+  onUnauthorized = handler;
 }
 
 export function getApiBaseUrl() {
@@ -36,6 +42,9 @@ async function buildHeaders(hasBody: boolean): Promise<HeadersInit> {
 
 async function throwIfNotOk(res: Response): Promise<void> {
   if (!res.ok) {
+    if (res.status === 401 && onUnauthorized) {
+      await onUnauthorized();
+    }
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }

@@ -2,26 +2,18 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { subscriptionsApi, analyticsApi } from '../lib/api';
+import { useSubscriptions, useAnalyticsSummary } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
-import type { Subscription, Analytics } from '../types';
+import type { Subscription } from '../types';
 
 export default function SubscriptionDashboard() {
   const navigation = useNavigation<any>();
 
-  const { data: subscriptions, isLoading } = useQuery<Subscription[]>({
-    queryKey: ['subscriptions'],
-    queryFn: () => subscriptionsApi.getAll().then(r => r.data),
-  });
+  const { data: subscriptions = [], isLoading } = useSubscriptions();
+  const { data: analytics } = useAnalyticsSummary();
 
-  const { data: analytics } = useQuery<Analytics>({
-    queryKey: ['analytics'],
-    queryFn: () => analyticsApi.getSummary().then(r => r.data),
-  });
-
-  const activeSubscriptions = subscriptions?.filter(s => s.isActive && s.status !== 'cancelled') || [];
-  const monthlyTotal = analytics?.monthlyTotal || 0;
+  const activeSubscriptions = subscriptions.filter((s) => s.isActive && s.status !== 'cancelled');
+  const monthlyTotal = analytics?.monthlyTotal ?? 0;
 
   const renderSubscription = ({ item }: { item: Subscription }) => (
     <TouchableOpacity 

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Status
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { conciergeApi } from '../lib/api';
+import { conciergeApi } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../lib/theme';
 import type { ConciergeRequest } from '../types';
 
@@ -15,14 +15,14 @@ export default function ConciergeScreen() {
   const [requestType, setRequestType] = useState('cancellation');
 
   const { data: requests = [], isLoading } = useQuery<ConciergeRequest[]>({
-    queryKey: ['concierge-requests'],
-    queryFn: () => conciergeApi.getRequests().then(r => r.data),
+    queryKey: ['/api/concierge/requests'],
+    queryFn: () => conciergeApi.list() as Promise<ConciergeRequest[]>,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => conciergeApi.createRequest(data),
+    mutationFn: (data: any) => conciergeApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['concierge-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/concierge/requests'] });
       setShowNewRequest(false);
       setRequestDescription('');
     },

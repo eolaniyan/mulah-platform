@@ -2,28 +2,20 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { analyticsApi } from '../lib/api';
+import { useCashflow, useCategoryTotals } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
-import type { CashflowData } from '../types';
 
 export default function CashflowScreen() {
   const navigation = useNavigation<any>();
 
-  const { data: cashflow, isLoading } = useQuery<CashflowData>({
-    queryKey: ['cashflow'],
-    queryFn: () => analyticsApi.getCashflow().then(r => r.data),
-  });
+  const { data: cashflow } = useCashflow();
 
-  const { data: categoryTotals = [] } = useQuery({
-    queryKey: ['category-totals'],
-    queryFn: () => analyticsApi.getCategoryTotals().then(r => r.data),
-  });
+  const { data: categoryTotals = [] } = useCategoryTotals();
 
   const totalIncome = cashflow?.totalIncome || 0;
   const totalExpenses = cashflow?.totalExpenses || 0;
   const netCashflow = cashflow?.netCashflow || 0;
-  const subExpenses = cashflow?.subscriptionExpenses || 0;
+  const subExpenses = cashflow?.subscriptionExpenses ?? 0;
 
   return (
     <View style={styles.container}>

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
-import { authApi } from '../lib/api';
+import { authApi, getApiBaseUrl } from '@mulah/shared-logic';
 import type { User } from '../types';
 
 interface AuthContextType {
@@ -21,9 +21,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const response = await authApi.getUser();
-      setUser(response.data);
-    } catch (error) {
+      const u = await authApi.getUser();
+      setUser(u as User | null);
+    } catch {
       setUser(null);
     }
   };
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async () => {
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://your-app.replit.app';
+    const API_BASE_URL = getApiBaseUrl() || process.env.EXPO_PUBLIC_API_URL || 'https://your-app.replit.app';
     const result = await WebBrowser.openAuthSessionAsync(
       `${API_BASE_URL}/api/login`,
       'mulah://auth-callback'
@@ -51,7 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await authApi.logout();
       await SecureStore.deleteItemAsync('auth_token');
       setUser(null);
     } catch (error) {

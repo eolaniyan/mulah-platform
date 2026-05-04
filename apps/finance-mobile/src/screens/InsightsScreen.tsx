@@ -2,21 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { cfaApi } from '../lib/api';
+import { useCFA } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
 
 export default function InsightsScreen() {
   const navigation = useNavigation<any>();
 
-  const { data: cfaSummary, isLoading } = useQuery({
-    queryKey: ['cfa-summary'],
-    queryFn: () => cfaApi.getSummary().then(r => r.data),
-  });
+  const { data: cfaSummary, isLoading } = useCFA();
 
-  const healthScore = cfaSummary?.healthScore || 75;
-  const insights = cfaSummary?.insights || [];
-  const patterns = cfaSummary?.patterns || [];
+  const healthScore = cfaSummary?.healthScore ?? 75;
+  const insights = cfaSummary?.insights ?? [];
+  const patterns = cfaSummary?.patterns ?? [];
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return colors.green[500];
@@ -87,7 +83,11 @@ export default function InsightsScreen() {
           insights.map((insight: any, index: number) => (
             <View key={index} style={styles.insightCard}>
               <Text style={styles.insightIcon}>
-                {insight.type === 'warning' ? '⚠️' : insight.type === 'success' ? '✅' : '💡'}
+                {insight.severity === 'warning' || insight.severity === 'error'
+                  ? '⚠️'
+                  : insight.severity === 'success'
+                    ? '✅'
+                    : '💡'}
               </Text>
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>{insight.title}</Text>

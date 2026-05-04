@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { servicesApi, subscriptionsApi } from '../lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  categoriesApi,
+  servicesCatalogApi,
+  useCreateSubscription,
+} from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../lib/theme';
 import type { Category, ServiceDirectory, ServicePlan } from '../types';
 
@@ -20,24 +24,24 @@ export default function AddSubscriptionScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ['categories'],
-    queryFn: () => servicesApi.getCategories().then(r => r.data),
+  const { data: rawCategories = [] } = useQuery({
+    queryKey: ['/api/categories'],
+    queryFn: () => categoriesApi.getAll(),
   });
+
+  const categories: Category[] = (rawCategories as Array<Record<string, unknown>>).map((c) => ({
+    id: String(c.id ?? ''),
+    name: String(c.name ?? ''),
+    icon: String(c.icon ?? '📁'),
+    color: String(c.color ?? colors.teal[500]),
+  }));
 
   const { data: services = [] } = useQuery<ServiceDirectory[]>({
-    queryKey: ['services'],
-    queryFn: () => servicesApi.getAll().then(r => r.data),
+    queryKey: ['/api/services'],
+    queryFn: () => servicesCatalogApi.getAll() as Promise<ServiceDirectory[]>,
   });
 
-  const mutation = useMutation({
-    mutationFn: (data: any) => subscriptionsApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      navigation.goBack();
-    },
-  });
+  const mutation = useCreateSubscription();
 
   const filteredServices = services.filter(s => {
     const matchesCategory = !selectedCategory || s.category === selectedCategory;
@@ -62,19 +66,28 @@ export default function AddSubscriptionScreen() {
 
   const handleConfirm = () => {
     if (!selectedService || !selectedPlan) return;
-    
-    mutation.mutate({
-      name: selectedService.name,
-      cost: selectedPlan.price,
-      billingCycle: selectedPlan.billingCycle,
-      category: selectedService.category,
-      description: selectedService.description,
-      nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      currency: selectedPlan.currency || 'EUR',
-      iconColor: selectedService.defaultColor || colors.teal[500],
-      iconName: selectedService.defaultIcon || 'fa-star',
-      isActive: true,
-    });
+
+    const nextBillingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    mutation.mutate(
+      {
+        name: selectedService.name,
+        cost: String(selectedPlan.price),
+        billingCycle: selectedPlan.billingCycle,
+        category: selectedService.category,
+        description: selectedService.description ?? undefined,
+        nextBillingDate,
+        currency: selectedPlan.currency || 'EUR',
+        iconColor: selectedService.defaultColor || colors.teal[500],
+        iconName: selectedService.defaultIcon || 'fa-star',
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
+          navigation.goBack();
+        },
+      }
+    );
   };
 
   const handleBack = () => {

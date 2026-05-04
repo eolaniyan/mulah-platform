@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { subscriptionsApi } from '../lib/api';
+import { useSubscriptions } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../lib/theme';
 import type { Subscription } from '../types';
 
@@ -14,10 +13,7 @@ export default function CalendarScreen() {
   const navigation = useNavigation<any>();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const { data: subscriptions = [] } = useQuery<Subscription[]>({
-    queryKey: ['subscriptions'],
-    queryFn: () => subscriptionsApi.getAll().then(r => r.data),
-  });
+  const { data: subscriptions = [] } = useSubscriptions();
 
   const currentMonth = selectedDate.getMonth();
   const currentYear = selectedDate.getFullYear();

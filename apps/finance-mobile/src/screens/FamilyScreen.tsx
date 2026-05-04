@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Status
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { familyApi } from '../lib/api';
+import { familiesApi } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
 import type { FamilyMember } from '../types';
 
@@ -13,21 +13,26 @@ export default function FamilyScreen() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
 
-  const { data: family } = useQuery({
-    queryKey: ['family'],
-    queryFn: () => familyApi.getFamily().then(r => r.data),
+  const { data: families = [] } = useQuery({
+    queryKey: ['/api/families'],
+    queryFn: () => familiesApi.list() as Promise<Array<{ id: number; name?: string }>>,
   });
 
-  const { data: members = [] } = useQuery<FamilyMember[]>({
-    queryKey: ['family-members'],
-    queryFn: () => familyApi.getMembers().then(r => r.data),
-    enabled: !!family,
+  const primaryFamilyId = families[0]?.id;
+
+  const { data: family } = useQuery({
+    queryKey: ['/api/families', primaryFamilyId],
+    queryFn: () => familiesApi.get(primaryFamilyId!) as Promise<{ name?: string; members?: FamilyMember[] }>,
+    enabled: primaryFamilyId != null,
   });
+
+  const members = family?.members ?? [];
 
   const inviteMutation = useMutation({
-    mutationFn: (email: string) => familyApi.inviteMember(email),
+    mutationFn: (email: string) => familiesApi.invite(primaryFamilyId!, email),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['family-members'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/families', primaryFamilyId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/families'] });
       setShowInviteModal(false);
       setInviteEmail('');
     },
@@ -55,7 +60,7 @@ export default function FamilyScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {!family ? (
+        {!primaryFamilyId ? (
           <View style={styles.createFamilyContainer}>
             <Text style={styles.createIcon}>👨‍👩‍👧‍👦</Text>
             <Text style={styles.createTitle}>Create Your Family</Text>
@@ -69,7 +74,7 @@ export default function FamilyScreen() {
         ) : (
           <>
             <View style={styles.familyCard}>
-              <Text style={styles.familyName}>{family.name || 'My Family'}</Text>
+              <Text style={styles.familyName}>{family?.name || families[0]?.name || 'My Family'}</Text>
               <Text style={styles.memberCount}>{members.length} members</Text>
             </View>
 

@@ -14,7 +14,12 @@
  */
 
 // Client config
-export { setApiBaseUrl, setTokenProvider, getApiBaseUrl } from "./api/client";
+export {
+  setApiBaseUrl,
+  setTokenProvider,
+  getApiBaseUrl,
+  setUnauthorizedHandler,
+} from "./api/client";
 
 // API modules
 export * from "./api/auth";
@@ -41,6 +46,8 @@ export {
   waitlistApi,
   demoApi,
 } from "./api/finance";
+
+export { servicesCatalogApi, configApi, familiesApi, conciergeApi } from "./api/extras";
 
 // Hooks
 export { useAuth, useCompleteOnboarding } from "./hooks/useAuth";

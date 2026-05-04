@@ -2,11 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
-import { analyticsApi, subscriptionsApi } from '../lib/api';
+import {
+  useSubscriptions,
+  useCashflow,
+  useUpcomingBills,
+  getTotalMonthlySpend,
+} from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
-import type { Analytics, Subscription, CashflowData } from '../types';
 
 function getDisplayName(user: any): string {
   if (!user) return 'User';
@@ -22,25 +25,20 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
 
-  const { data: subscriptions } = useQuery<Subscription[]>({
-    queryKey: ['subscriptions'],
-    queryFn: () => subscriptionsApi.getAll().then(r => r.data),
-  });
+  const { data: subscriptions = [] } = useSubscriptions();
+  const { data: cashflowSummary } = useCashflow();
+  const { data: upcoming = [] } = useUpcomingBills();
 
-  const { data: analytics } = useQuery<Analytics>({
-    queryKey: ['analytics'],
-    queryFn: () => analyticsApi.getSummary().then(r => r.data),
-  });
-
-  const { data: cashflow } = useQuery<CashflowData>({
-    queryKey: ['cashflow'],
-    queryFn: () => analyticsApi.getCashflow().then(r => r.data),
-  });
-
-  const monthlyTotal = analytics?.monthlyTotal || 0;
-  const activeCount = subscriptions?.filter(s => s.isActive && s.status !== 'cancelled').length || 0;
-  const upcomingCount = analytics?.upcomingRenewals?.length || 0;
-  const netCashflow = cashflow?.netCashflow || 0;
+  const monthlyTotal = getTotalMonthlySpend(subscriptions);
+  const activeCount = subscriptions.filter((s) => s.isActive && s.status !== 'cancelled').length;
+  const upcomingCount = upcoming.length;
+  const netCashflow = cashflowSummary?.netCashflow ?? 0;
+  const subscriptionExpenses =
+    cashflowSummary?.subscriptionExpenses ??
+    cashflowSummary?.expensesByCategory?.find((e) =>
+      String(e.category).toLowerCase().includes('subscription')
+    )?.amount ??
+    monthlyTotal;
 
   return (
     <View style={styles.container}>
@@ -143,7 +141,7 @@ export default function HomeScreen() {
                   <Text style={styles.statLabel}>Net Cashflow</Text>
                 </View>
                 <View style={[styles.stat, styles.statBorder]}>
-                  <Text style={styles.statValue}>€{cashflow?.subscriptionExpenses?.toFixed(0) || 0}</Text>
+                  <Text style={styles.statValue}>€{subscriptionExpenses.toFixed(0)}</Text>
                   <Text style={styles.statLabel}>Sub Expenses</Text>
                 </View>
               </View>

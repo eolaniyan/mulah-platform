@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Status
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation } from '@tanstack/react-query';
-import { irisApi } from '../lib/api';
+import { irisApi } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../lib/theme';
 
 interface Message {
@@ -27,12 +27,12 @@ export default function IRISScreen() {
   const [inputText, setInputText] = useState('');
 
   const chatMutation = useMutation({
-    mutationFn: (message: string) => irisApi.chat(message),
+    mutationFn: (message: string) => irisApi.ask(message),
     onSuccess: (response) => {
       const assistantMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: response.data.response || "I'm here to help! Could you please rephrase your question?",
+        content: response.message || "I'm here to help! Could you please rephrase your question?",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, assistantMessage]);

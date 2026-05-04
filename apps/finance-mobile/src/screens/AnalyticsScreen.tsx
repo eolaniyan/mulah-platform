@@ -2,29 +2,20 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { analyticsApi, subscriptionsApi } from '../lib/api';
+import { useAnalyticsSummary, useSubscriptions } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../lib/theme';
-import type { Analytics, Subscription } from '../types';
 
 const { width } = Dimensions.get('window');
 
 export default function AnalyticsScreen() {
   const navigation = useNavigation<any>();
 
-  const { data: analytics } = useQuery<Analytics>({
-    queryKey: ['analytics'],
-    queryFn: () => analyticsApi.getSummary().then(r => r.data),
-  });
+  const { data: analytics } = useAnalyticsSummary();
+  const { data: subscriptions = [] } = useSubscriptions();
 
-  const { data: subscriptions = [] } = useQuery<Subscription[]>({
-    queryKey: ['subscriptions'],
-    queryFn: () => subscriptionsApi.getAll().then(r => r.data),
-  });
-
-  const categoryBreakdown = analytics?.categoryBreakdown || [];
-  const monthlyTotal = analytics?.monthlyTotal || 0;
-  const annualTotal = analytics?.annualTotal || 0;
+  const categoryBreakdown = analytics?.categoryBreakdown ?? [];
+  const monthlyTotal = analytics?.monthlyTotal ?? 0;
+  const annualTotal = analytics?.annualTotal ?? 0;
 
   const maxCategoryValue = Math.max(...categoryBreakdown.map(c => c.total), 1);
 
