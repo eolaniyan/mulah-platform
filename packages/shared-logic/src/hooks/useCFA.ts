@@ -1,6 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { analyticsApi, type CFASummary } from "../api/analytics";
-import { calculateHealthScore } from "../utils/cfa";
+import {
+  analyticsApi,
+  type CFASummary,
+  type CashflowSummary,
+  type CategoryBreakdown,
+  type SpendingTrend,
+  type MonthlyAnalytics,
+  type UpcomingBill,
+  type AnalyticsSummary,
+  type AnalyticsInsightResponse,
+} from "../api/analytics";
+
+// ─── CFA Summary (health score + insights + resilience) ───────────────────────
 
 export function useCFA(params?: { from?: string; to?: string }) {
   return useQuery<CFASummary>({
@@ -9,56 +20,88 @@ export function useCFA(params?: { from?: string; to?: string }) {
   });
 }
 
+/**
+ * Returns the financial health score directly from the API.
+ * healthScore is 0-100; riskLevel is 'low' | 'moderate' | 'high' | 'critical'.
+ */
 export function useHealthScore(params?: { from?: string; to?: string }) {
-  const { data: cfa, isLoading, error } = useCFA(params);
-  const healthScore = cfa ? calculateHealthScore(cfa) : null;
-  return { healthScore, cfaSummary: cfa, isLoading, error };
+  const { data: cfaSummary, isLoading, error } = useCFA(params);
+  return {
+    healthScore: cfaSummary?.healthScore ?? null,
+    riskLevel: cfaSummary?.riskLevel ?? null,
+    savingsRate: cfaSummary?.savingsRate ?? null,
+    subscriptionBurden: cfaSummary?.subscriptionBurden ?? null,
+    cfaSummary,
+    isLoading,
+    error,
+  };
 }
 
+// ─── Home screen analytics summary ────────────────────────────────────────────
+
+export function useAnalyticsSummary() {
+  return useQuery<AnalyticsSummary>({
+    queryKey: ["/api/analytics"],
+    queryFn: () => analyticsApi.getSummary(),
+  });
+}
+
+// ─── Cashflow (single summary object — NOT an array) ──────────────────────────
+
 export function useCashflow() {
-  return useQuery({
+  return useQuery<CashflowSummary>({
     queryKey: ["/api/analytics/cashflow"],
     queryFn: () => analyticsApi.getCashflow(),
   });
 }
 
+// ─── Category totals ──────────────────────────────────────────────────────────
+
 export function useCategoryTotals() {
-  return useQuery({
+  return useQuery<CategoryBreakdown[]>({
     queryKey: ["/api/analytics/category-totals"],
     queryFn: () => analyticsApi.getCategoryTotals(),
   });
 }
 
+// ─── Spending trends ──────────────────────────────────────────────────────────
+
 export function useSpendingTrends() {
-  return useQuery({
+  return useQuery<SpendingTrend[]>({
     queryKey: ["/api/analytics/spending-trends"],
     queryFn: () => analyticsApi.getSpendingTrends(),
   });
 }
 
+// ─── Monthly analytics ────────────────────────────────────────────────────────
+
 export function useMonthlyAnalytics() {
-  return useQuery({
+  return useQuery<MonthlyAnalytics[]>({
     queryKey: ["/api/analytics/monthly"],
     queryFn: () => analyticsApi.getMonthly(),
   });
 }
 
 export function useAnnualAnalytics() {
-  return useQuery({
+  return useQuery<MonthlyAnalytics[]>({
     queryKey: ["/api/analytics/annual"],
     queryFn: () => analyticsApi.getAnnual(),
   });
 }
 
-export function useUpcomingBills() {
-  return useQuery({
-    queryKey: ["/api/analytics/upcoming"],
-    queryFn: () => analyticsApi.getUpcoming(),
+// ─── Upcoming bills ───────────────────────────────────────────────────────────
+
+export function useUpcomingBills(days = 30) {
+  return useQuery<UpcomingBill[]>({
+    queryKey: ["/api/analytics/upcoming", days],
+    queryFn: () => analyticsApi.getUpcoming(days),
   });
 }
 
+// ─── Analytics insights ───────────────────────────────────────────────────────
+
 export function useAnalyticsInsights() {
-  return useQuery({
+  return useQuery<AnalyticsInsightResponse>({
     queryKey: ["/api/analytics/insights"],
     queryFn: () => analyticsApi.getInsights(),
   });
