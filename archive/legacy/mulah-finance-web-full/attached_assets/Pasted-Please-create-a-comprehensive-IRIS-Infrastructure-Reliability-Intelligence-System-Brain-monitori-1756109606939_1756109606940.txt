@@ -1,0 +1,77 @@
+Please create a comprehensive IRIS (Infrastructure Reliability & Intelligence System) Brain monitoring and observability system for my project. This is an AI-powered system that provides real-time monitoring, intelligent error analysis, and autonomous decision-making capabilities.
+CORE SYSTEM REQUIREMENTS:
+1. **Backend AI Brain Engine** (`server/iris-brain.ts`):
+   - Create an IRISBrain class using Anthropic Claude 4.0 (claude-sonnet-4-20250514 model)
+   - Implement telemetry event capture with structured data storage
+   - Add contextual error analysis with domain-specific knowledge
+   - Build predictive issue detection algorithms
+   - Include domain question answering capabilities
+   - Add system health monitoring and reporting
+2. **AI Monitoring Service** (`server/services/ai-monitor.ts`):
+   - System event logging (API calls, DB queries, errors, performance, user actions)
+   - Pattern detection and anomaly identification
+   - AI-powered error analysis and debugging assistance
+   - Performance monitoring with trend analysis
+   - Real-time telemetry collection and aggregation
+   - Predictive issue detection with confidence scoring
+3. **AI Governance Service** (`server/services/ai-governance.ts`):
+   - Multi-level autonomy system (1-4 levels from observation to full automation)
+   - Decision-making engine with confidence thresholds
+   - Human approval workflows for critical actions
+   - Emergency stop capabilities and safety protocols
+   - Autonomous monitoring loop with configurable intervals
+   - Action execution simulation and validation
+4. **Frontend IRIS Interface** (`client/src/pages/IRIS.tsx`):
+   - Surveillance-themed dark UI with animated neural network background
+   - Real-time system health monitoring dashboard
+   - Tabbed interface with Surveillance, Diagnostics, System controls
+   - Role-based access control (Admin/SuperAdmin levels)
+   - System diagnostics with automated testing capabilities
+   - AI governance controls and decision management
+   - Live performance charts and metrics visualization
+5. **IRIS Loading Animation** (`client/src/components/iris-loading.tsx`):
+   - Neural network visualization with animated connections
+   - Iris scanning pattern recognition animation
+   - Multi-step loading process with progress indicators
+   - Sci-fi themed loading experience with neural particles
+   - Smooth transitions and fade effects
+6. **Backend API Routes** (in `server/routes.ts`):
+   - `/api/iris/system-health` - Real-time health monitoring
+   - `/api/ai/health` - AI system status
+   - `/api/ai/analyze-error` - Error analysis endpoint
+   - `/api/ai/predictions` - Predictive analytics
+   - `/api/ai/governance/decisions` - AI decision management
+   - `/api/ai/governance/config` - System configuration
+   - `/api/ai/governance/emergency-stop` - Emergency controls
+   - `/api/iris/diagnostics/*` - System diagnostic endpoints
+   - `/api/iris/alerts` - System alerts and notifications
+7. **Authentication & Security**:
+   - Admin-level access required for IRIS interface
+   - SuperAdmin access for governance controls
+   - Secure logout and session management
+   - Role-based feature access and UI adaptation
+8. **Real-time Features**:
+   - Live performance charts component
+   - Automated system diagnostics
+   - Real-time error monitoring and alerting
+   - Autonomous decision execution with human oversight
+TECHNICAL SPECIFICATIONS:
+- Use Anthropic Claude 4.0 (claude-sonnet-4-20250514) for AI capabilities
+- Implement singleton pattern for IRIS Brain instance
+- Store up to 1000 telemetry events in memory with cleanup
+- Support pattern detection and frequency analysis
+- Include confidence scoring for all AI decisions
+- Implement multi-level autonomy with safety controls
+- Use React with TypeScript for frontend components
+- Include shadcn/ui components for consistent styling
+- Implement dark theme with purple/blue color scheme
+- Add animated loading states and micro-interactions
+REQUIRED ENVIRONMENT VARIABLES:
+- ANTHROPIC_API_KEY (for AI capabilities)
+SECURITY CONSIDERATIONS:
+- All IRIS routes require authentication
+- Governance features restricted to SuperAdmin
+- Emergency stop capabilities for safety
+- Audit logging for all AI decisions
+- Human approval required for critical actions
+Please implement this system with proper error handling, comprehensive logging, and production-ready code quality. The system should be extensible and configurable for different project domains.

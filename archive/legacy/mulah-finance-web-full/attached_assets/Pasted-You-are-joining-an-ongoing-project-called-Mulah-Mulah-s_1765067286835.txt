@@ -1,0 +1,133 @@
+You are joining an ongoing project called Mulah.
+
+Mulah’s core idea:
+Mulah is a subscription + personal finance platform with a long-term vision to act as both a consumer app and infrastructure for merchants/banks. Its slogan is:
+“Simplify your spending. Amplify your peace.”
+
+Key pillars:
+
+Unified Subscription Wallet (USW)
+
+Central place where users can see, manage, start/pause/cancel all their subscriptions (Netflix, Spotify, gym, etc.).
+
+Handles subscriptions from bank/card data (via open banking) and manually added subscriptions.
+
+Supports “subscription events”: upcoming renewals, changes in price, failed payments, free trials ending, etc.
+
+Personal Finance Layer
+
+Pulls transaction data (open banking or uploaded statements) and provides:
+
+Categorisation (bills, groceries, transport, etc.)
+
+Cashflow view (income vs expenses, surplus/deficit)
+
+Budgeting / bill tracking (what’s due when).
+
+Complex Finance Analyzer (CFA) – advanced layer
+
+Takes multiple accounts / multiple years of data and does deeper analysis:
+
+Patterns: recurring expenses, lifestyle inflation, seasonality.
+
+Risk / resilience: how fragile is the user’s position if income drops, expenses spike, etc.
+
+Scenarios / “stress tests”: e.g. “What happens if rent goes up by 20%?” or “What if you lose one income stream?”.
+
+CFA is likely a premium/paid feature long term. MVP can be simpler:
+
+Combine data from multiple accounts and give a coherent story and a few high-impact insights.
+
+Future Infrastructure Vision (don’t implement now, just keep in mind)
+
+Mulah eventually exposes APIs / tools for:
+
+Merchants to plug into USW as a “subscription gateway”.
+
+Banks/fintechs to offer Mulah-powered insights to their customers.
+
+Current goal
+
+Focus on building a clean, extensible MVP backend + basic frontend that:
+
+Can ingest financial data (at minimum via CSV/statement upload; open banking can be mocked).
+
+Can detect and store subscriptions.
+
+Can store and summarise transactions.
+
+Exposes a simple UI for:
+
+Viewing subscriptions
+
+Viewing basic spending insights
+
+Running a very basic CFA analysis on uploaded data (even if just a single “insights” endpoint for now).
+
+Don’t overcomplicate, but structure the code so we can grow into everything above.
+
+Architecture expectations
+
+Please:
+
+Keep a clear separation between:
+
+API layer (routes/controllers)
+
+Service layer (business logic)
+
+Data layer (ORM / DB access)
+
+Make it easy to add new analysis modules later (e.g. more CFA engines, new subscription detectors) without rewriting everything.
+
+Prefer strong typing (TypeScript) if this project is already using Node/TS. Don’t change stack unless absolutely necessary.
+
+Tasks for you (Replit AI / Dev)
+
+Audit the existing codebase
+
+List:
+
+What features currently exist (auth, uploads, any subscription logic, any analytics, etc.).
+
+What the current architecture looks like (framework, structure, DB, main modules).
+
+Compare against the spec above
+
+Identify gaps: what’s missing for:
+
+basic subscription management
+
+basic finance summary
+
+a first CFA insights endpoint
+
+Identify misalignments: parts of the code that don’t fit this structure or future vision.
+
+Propose a short refactor/roadmap
+
+Suggest a step-by-step plan (e.g. Step 1: clean structure, Step 2: implement subscription detection v1, Step 3: implement CFA v1 endpoint, etc.).
+
+Implement Step 1 of that plan now
+
+This might include:
+
+Restructuring folders into api/services/data
+
+Creating or cleaning core models (User, Account, Transaction, Subscription, Insight/CFAReport)
+
+Adding basic endpoints or tests.
+
+Document what you’ve done
+
+Update or create a README_MULAH_ALIGNMENT.md summarising:
+
+The current stack and architecture.
+
+What exists now.
+
+What you changed in this pass.
+
+What’s next.
+
+Whenever you’re unsure, optimise for clarity and extensibility rather than cleverness.

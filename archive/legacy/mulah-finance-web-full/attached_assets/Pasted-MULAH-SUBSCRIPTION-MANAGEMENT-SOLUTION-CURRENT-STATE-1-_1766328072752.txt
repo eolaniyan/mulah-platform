@@ -1,0 +1,212 @@
+MULAH — SUBSCRIPTION MANAGEMENT SOLUTION (CURRENT STATE)
+
+1. Core Problem Mulah Solves
+
+Modern subscriptions fail users because:
+	•	billing dates are fragmented and unpredictable
+	•	money is spread across multiple accounts
+	•	merchants control billing logic, not users
+	•	existing tools only track or buffer subscriptions, they don’t control them
+
+Mulah’s goal is to give users real control over subscriptions, not just visibility.
+
+⸻
+
+2. Mulah’s Positioning (Very Important)
+
+Mulah is not:
+	•	a savings pot
+	•	a passive subscription tracker
+	•	a wallet holding customer funds
+	•	a merchant of record (in V1)
+
+Mulah is:
+	•	a subscription billing control layer
+	•	a liquidity orchestration system
+	•	a unified subscription wallet (USW)
+	•	a future subscription identity infrastructure
+
+⸻
+
+3. The Three Core Layers of Mulah
+
+Layer 1 — Subscription Billing Authority
+
+This layer decides:
+	•	when a subscription is due
+	•	how much is due
+	•	what rules apply (proration, retries, pauses)
+
+This is where billing-date control lives.
+
+⸻
+
+Layer 2 — Unified Subscription Wallet (USW)
+
+USW:
+	•	aggregates all subscriptions (onboarded + non-onboarded)
+	•	provides one user-facing control surface
+	•	schedules upcoming obligations
+	•	enforces user preferences (billing date, limits, rules)
+	•	integrates with CFA for forecasting and insights
+
+USW does not hold money.
+It schedules and coordinates obligations.
+
+⸻
+
+Layer 3 — Liquidity Orchestration Engine (LOE)
+
+LOE answers only one question:
+
+“How do we fund this obligation safely, compliantly, and optimally?”
+
+LOE:
+	•	reads balances across multiple accounts (AISP)
+	•	builds a funding plan
+	•	initiates authorised debits (PISP)
+	•	can split payments across accounts
+	•	never pools or stores funds
+	•	never lends money in V1
+
+⸻
+
+4. Two Active Subscription Control Methods
+
+Method 1 — Cooperative Merchant Billing Control
+
+Who it’s for:
+Merchants who onboard to Mulah (gyms, SaaS, services, SMEs).
+
+What Mulah controls:
+	•	billing date
+	•	billing cycle
+	•	proration
+	•	retries
+	•	pauses / resumes
+	•	upgrades / downgrades
+
+How it works:
+	•	Merchant uses Mulah as their subscription engine
+	•	User selects preferred billing date
+	•	Mulah enforces alignment directly
+	•	LOE funds the charge at execution time
+
+Result:
+	•	True billing-date control
+	•	Lower churn for merchants
+	•	One unified billing experience for users
+
+⸻
+
+Method 3 — Subscription Identity Layer (Mulah Billing Token)
+
+Who it’s for:
+Merchants willing to delegate billing identity (long-term play).
+
+What changes:
+	•	Merchant no longer stores card/bank details
+	•	Merchant stores a Mulah Billing Token
+	•	Mulah defines billing date and cycle
+
+Flow:
+	1.	User subscribes using “Subscribe with Mulah”
+	2.	Merchant charges Mulah token
+	3.	Mulah validates the request
+	4.	LOE sources funds from user accounts
+	5.	Merchant is settled cleanly
+
+Result:
+	•	Mulah controls billing dates globally
+	•	Strong network effects
+	•	Mulah becomes subscription infrastructure
+
+⸻
+
+5. What Happens with Big / Non-Cooperative Merchants
+
+Examples: Netflix, Disney+, Tinder, Apple/Google-billed subscriptions.
+
+Mulah cannot:
+	•	change their billing dates
+	•	override platform billing logic
+
+Mulah can:
+	•	recognise and track them
+	•	forecast obligations
+	•	prevent failures via liquidity orchestration
+	•	guide cancellation or switching to direct billing if available
+
+These are classified as:
+
+Non-Controllable Subscriptions (NCS)
+
+Mulah is honest about this distinction.
+
+⸻
+
+6. Billing Date Reality (Clear Rule)
+	•	Billing dates are only changed where Mulah has billing authority
+	•	Method 1 (merchant onboarded)
+	•	Method 3 (Mulah billing token)
+	•	Otherwise, Mulah stabilises outcomes but does not falsely claim control
+
+This preserves trust and compliance.
+
+⸻
+
+7. Liquidity Orchestration (Key Innovation)
+
+Mulah eliminates the problem of fragmented money by:
+	•	treating all authorised accounts as one liquidity pool
+	•	executing payments from multiple accounts if needed
+	•	enforcing user-defined rules (min balances, exclusions)
+
+This allows:
+	•	subscriptions to succeed even if no single account has enough
+	•	users to stop thinking in “which account should I pay from?”
+
+⸻
+
+8. Regulatory Posture (V1)
+
+Mulah operates as:
+	•	AISP (account visibility)
+	•	PISP (payment initiation)
+	•	billing coordinator
+
+Mulah does not:
+	•	hold customer funds
+	•	act as a bank
+	•	act as a lender
+	•	act as merchant of record
+
+This keeps V1 low-risk and fast to market.
+
+⸻
+
+9. Failure & Safety Principles
+	•	No partial execution without compensation
+	•	No negative balances
+	•	No implicit credit
+	•	No silent failures
+	•	Full auditability of consent and actions
+
+⸻
+
+10. What Makes This Genuinely Innovative
+
+Mulah is not just managing subscriptions — it is re-architecting how subscriptions work:
+	•	Billing dates become user-controlled (where possible)
+	•	Liquidity is orchestrated across accounts in real time
+	•	Subscriptions become deterministic, not chaotic
+	•	Merchants gain lower churn
+	•	Users gain predictability and calm
+
+This is infrastructure, not a feature.
+
+⸻
+
+11. Current State Summary (One Sentence)
+
+Mulah is a consent-driven subscription billing and liquidity orchestration platform that gives users real control over when subscriptions are billed and how they are funded—without Mulah ever holding or owning their money
