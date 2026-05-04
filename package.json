@@ -1,0 +1,18 @@
+{
+  "name": "mulah-platform",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:finance-web": "pnpm --dir apps/finance-web dev",
+    "dev:finance-mobile": "pnpm --dir apps/finance-mobile start",
+    "dev:signals": "pnpm --dir apps/signals dev",
+    "dev:api": "echo \"define service-specific dev command\"",
+    "lint": "echo \"define workspace lint\"",
+    "test": "echo \"define workspace test\""
+  }
+}
