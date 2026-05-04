@@ -295,6 +295,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics routes
+  // Home screen analytics summary — aggregates subscriptions + upcoming renewals
+  app.get('/api/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const subscriptions = await storage.getSubscriptions(userId);
+
+      const parseCost = (cost: string | number): number => {
+        const cleaned = String(cost).replace(/[^0-9.-]/g, '');
+        return parseFloat(cleaned) || 0;
+      };
+
+      const active = subscriptions.filter(s => s.isActive && s.status !== 'cancelled');
+      let monthlyTotal = 0;
+      let annualTotal = 0;
+
+      for (const sub of active) {
+        const cost = parseCost(sub.cost);
+        const monthly = sub.billingCycle === 'yearly' ? cost / 12 :
+                        sub.billingCycle === 'weekly' ? cost * 4.33 : cost;
+        monthlyTotal += monthly;
+        annualTotal += monthly * 12;
+      }
+
+      // Category breakdown
+      const catMap: Record<string, { total: number; count: number }> = {};
+      for (const sub of active) {
+        const cat = sub.category || 'general';
+        const cost = parseCost(sub.cost);
+        const monthly = sub.billingCycle === 'yearly' ? cost / 12 :
+                        sub.billingCycle === 'weekly' ? cost * 4.33 : cost;
+        if (!catMap[cat]) catMap[cat] = { total: 0, count: 0 };
+        catMap[cat].total += monthly;
+        catMap[cat].count += 1;
+      }
+      const categoryBreakdown = Object.entries(catMap)
+        .map(([category, v]) => ({ category, total: Math.round(v.total * 100) / 100, count: v.count }))
+        .sort((a, b) => b.total - a.total);
+
+      // Upcoming renewals — due in next 30 days
+      const now = Date.now();
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      const upcomingRenewals = active
+        .filter(s => {
+          const due = new Date(s.nextBillingDate).getTime();
+          return due >= now && due <= now + thirtyDays;
+        })
+        .sort((a, b) => new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime());
+
+      res.json({
+        monthlyTotal: Math.round(monthlyTotal * 100) / 100,
+        annualTotal: Math.round(annualTotal * 100) / 100,
+        categoryBreakdown,
+        upcomingRenewals,
+      });
+    } catch (error) {
+      console.error("Error fetching analytics summary:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
   app.get('/api/analytics/monthly', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -910,242 +970,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastSyncAt: new Date(),
       });
 
-      // Create comprehensive demo bank transactions spread across 3 months
-      // This ensures period filtering shows different data
+      // Create 6 months of realistic Irish household bank transactions
+      // Salary €3,850/mo → leaves ~€420 surplus after all expenses (savings rate ~11%)
       const month = 30 * day;
+      const t = (daysAgo: number) => new Date(now - daysAgo * day);
+      const tx = (id: string, amount: string, desc: string, merchant: string, cat: string, daysAgo: number, isSub = false, dir: 'in'|'out' = 'out') => ({
+        userId,
+        bankConnectionId: bankConnection.id,
+        transactionId: `txn_demo_${now}_${id}`,
+        amount,
+        currency: 'EUR',
+        description: desc,
+        merchantName: merchant,
+        category: cat,
+        confidence: '0.92',
+        transactionDate: t(daysAgo),
+        isSubscriptionPayment: isSub,
+        direction: dir,
+      });
+
       const demoTransactions = [
-        // === MONTH 1 (Current month - recent transactions) ===
-        // Income - this month
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_income1`,
-          amount: '-3500.00',
-          currency: 'EUR',
-          description: 'Salary Payment - December',
-          merchantName: 'Employer GmbH',
-          category: 'income',
-          confidence: '0.99',
-          transactionDate: new Date(now - 2 * day),
-          isSubscriptionPayment: false,
-          direction: 'in'
-        },
-        // Recent expenses (within 7 days)
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_recent1`,
-          amount: '45.00',
-          currency: 'EUR',
-          description: 'Weekly Groceries',
-          merchantName: 'REWE Supermarket',
-          category: 'groceries',
-          confidence: '0.88',
-          transactionDate: new Date(now - 2 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_recent2`,
-          amount: '25.00',
-          currency: 'EUR',
-          description: 'Dinner',
-          merchantName: 'Restaurant',
-          category: 'dining',
-          confidence: '0.85',
-          transactionDate: new Date(now - 4 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
-        // This month (8-30 days ago)
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m1_1`,
-          amount: '13.49',
-          currency: 'EUR',
-          description: 'Netflix Subscription',
-          merchantName: 'Netflix',
-          category: 'streaming',
-          confidence: '0.95',
-          transactionDate: new Date(now - 15 * day),
-          isSubscriptionPayment: true,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m1_2`,
-          amount: '120.00',
-          currency: 'EUR',
-          description: 'Monthly Utilities',
-          merchantName: 'Power Company',
-          category: 'utilities',
-          confidence: '0.95',
-          transactionDate: new Date(now - 10 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m1_3`,
-          amount: '85.00',
-          currency: 'EUR',
-          description: 'Groceries',
-          merchantName: 'Lidl',
-          category: 'groceries',
-          confidence: '0.87',
-          transactionDate: new Date(now - 12 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
+        // ── Month 1 (current month) ──────────────────────────────────────────
+        tx('m1_salary',    '-3850.00', 'Salary — May 2026',         'Accenture Ireland Ltd',     'income',        3,  false, 'in'),
+        tx('m1_rent',      '1400.00',  'Rent Payment May',           'Belgrove Property Mgmt',   'housing',       2),
+        tx('m1_elec',      '82.50',    'Electric Ireland Bill',       'Electric Ireland',         'utilities',     5),
+        tx('m1_gas',       '54.00',    'Gas Bill',                    'Gas Networks Ireland',     'utilities',     5),
+        tx('m1_broadband', '49.99',    'Vodafone Home Broadband',     'Vodafone Ireland',         'telecom',       6,  true),
+        tx('m1_mobile',    '29.99',    'Vodafone Mobile Plan',        'Vodafone Ireland',         'telecom',       6,  true),
+        tx('m1_groc1',     '87.40',    'Weekly Shop',                 'Tesco Superstore',         'groceries',     1),
+        tx('m1_groc2',     '54.20',    'Weekly Shop',                 'Lidl Ireland',             'groceries',     8),
+        tx('m1_groc3',     '61.80',    'Weekly Shop',                 'Dunnes Stores',            'groceries',    15),
+        tx('m1_groc4',     '48.60',    'Weekly Shop',                 'Aldi Ireland',             'groceries',    22),
+        tx('m1_coffee1',   '5.40',     'Flat White',                  "Bewley's Café",            'dining',        1),
+        tx('m1_coffee2',   '4.90',     'Americano',                   'Costa Coffee',             'dining',        4),
+        tx('m1_coffee3',   '6.20',     'Coffee & Pastry',             'Starbucks',                'dining',        9),
+        tx('m1_lunch1',    '12.50',    'Lunch',                       'Rustic Stone',             'dining',        3),
+        tx('m1_lunch2',    '9.80',     'Meal Deal',                   'Spar',                     'dining',        7),
+        tx('m1_dinner1',   '68.40',    'Dinner for 2',                'Etto Restaurant',          'dining',       11),
+        tx('m1_fuel',      '78.50',    'Fuel',                        'Circle K',                 'transport',    10),
+        tx('m1_luas',      '38.00',    'Luas Monthly Leap Card Top-up','Transport for Ireland',   'transport',     2),
+        tx('m1_netflix',   '13.49',    'Netflix Standard',            'Netflix',                  'streaming',    10, true),
+        tx('m1_spotify',   '9.99',     'Spotify Premium',             'Spotify',                  'music',        10, true),
+        tx('m1_adobe',     '59.99',    'Adobe Creative Cloud',        'Adobe Systems',            'design',       10, true),
+        tx('m1_chatgpt',   '20.00',    'ChatGPT Plus',                'OpenAI',                   'productivity', 10, true),
+        tx('m1_gym',       '49.99',    'Gym Plus Monthly',            'Gym Plus',                 'fitness',      10, true),
+        tx('m1_pharmacy',  '22.40',    'Prescription & Vitamins',     'Boots Pharmacy',           'health',       13),
+        tx('m1_parking',   '14.00',    'Car Park',                    'Q-Park Ireland',           'transport',     6),
+        tx('m1_amazon',    '34.99',    'Amazon Order',                'Amazon',                   'shopping',      8),
+        tx('m1_clothes',   '45.00',    'Clothes',                     'Penneys',                  'shopping',     14),
 
-        // === MONTH 2 (31-60 days ago) ===
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_income2`,
-          amount: '-3500.00',
-          currency: 'EUR',
-          description: 'Salary Payment - November',
-          merchantName: 'Employer GmbH',
-          category: 'income',
-          confidence: '0.99',
-          transactionDate: new Date(now - 1 * month - 5 * day),
-          isSubscriptionPayment: false,
-          direction: 'in'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m2_1`,
-          amount: '13.49',
-          currency: 'EUR',
-          description: 'Netflix Subscription',
-          merchantName: 'Netflix',
-          category: 'streaming',
-          confidence: '0.95',
-          transactionDate: new Date(now - 1 * month - 15 * day),
-          isSubscriptionPayment: true,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m2_2`,
-          amount: '95.00',
-          currency: 'EUR',
-          description: 'Groceries',
-          merchantName: 'REWE',
-          category: 'groceries',
-          confidence: '0.88',
-          transactionDate: new Date(now - 1 * month - 10 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m2_3`,
-          amount: '110.00',
-          currency: 'EUR',
-          description: 'Utilities',
-          merchantName: 'Power Company',
-          category: 'utilities',
-          confidence: '0.95',
-          transactionDate: new Date(now - 1 * month - 8 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m2_4`,
-          amount: '60.00',
-          currency: 'EUR',
-          description: 'Dinner out',
-          merchantName: 'Restaurant',
-          category: 'dining',
-          confidence: '0.85',
-          transactionDate: new Date(now - 1 * month - 20 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
+        // ── Month 2 (31–60 days ago) ──────────────────────────────────────────
+        tx('m2_salary',    '-3850.00', 'Salary — April 2026',        'Accenture Ireland Ltd',    'income',       33, false, 'in'),
+        tx('m2_rent',      '1400.00',  'Rent Payment April',          'Belgrove Property Mgmt',  'housing',      32),
+        tx('m2_elec',      '91.00',    'Electric Ireland Bill',       'Electric Ireland',         'utilities',    35),
+        tx('m2_broadband', '49.99',    'Vodafone Home Broadband',     'Vodafone Ireland',         'telecom',      36, true),
+        tx('m2_mobile',    '29.99',    'Vodafone Mobile Plan',        'Vodafone Ireland',         'telecom',      36, true),
+        tx('m2_groc1',     '92.10',    'Weekly Shop',                 'Tesco Superstore',         'groceries',    31),
+        tx('m2_groc2',     '59.30',    'Weekly Shop',                 'Aldi Ireland',             'groceries',    38),
+        tx('m2_groc3',     '55.40',    'Weekly Shop',                 'Lidl Ireland',             'groceries',    45),
+        tx('m2_groc4',     '67.20',    'Weekend Shop',                'Dunnes Stores',            'groceries',    52),
+        tx('m2_coffee1',   '5.40',     'Flat White',                  "Bewley's Café",            'dining',       33),
+        tx('m2_coffee2',   '4.60',     'Americano & Muffin',          'Costa Coffee',             'dining',       40),
+        tx('m2_lunch1',    '13.20',    'Lunch',                       "Burdock's Fish & Chips",   'dining',       34),
+        tx('m2_dinner1',   '54.80',    'Saturday Dinner',             'Fade Street Social',       'dining',       42),
+        tx('m2_dinner2',   '38.00',    'Takeaway',                    'Deliveroo',                'dining',       49),
+        tx('m2_fuel',      '82.00',    'Fuel',                        'Applegreen',               'transport',    40),
+        tx('m2_luas',      '38.00',    'Luas Monthly Leap Top-up',    'Transport for Ireland',    'transport',    33),
+        tx('m2_netflix',   '13.49',    'Netflix Standard',            'Netflix',                  'streaming',    40, true),
+        tx('m2_spotify',   '9.99',     'Spotify Premium',             'Spotify',                  'music',        40, true),
+        tx('m2_adobe',     '59.99',    'Adobe Creative Cloud',        'Adobe Systems',            'design',       40, true),
+        tx('m2_gym',       '49.99',    'Gym Plus Monthly',            'Gym Plus',                 'fitness',      40, true),
+        tx('m2_icloud',    '2.99',     'iCloud+ 200GB',               'Apple',                    'cloud',        40, true),
+        tx('m2_yt',        '11.99',    'YouTube Premium',             'Google',                   'streaming',    40, true),
+        tx('m2_atm',       '100.00',   'ATM Withdrawal',              'AIB ATM O\'Connell St',   'cash',         37),
+        tx('m2_clothes',   '120.00',   'Spring Clothes',              'Zara',                     'shopping',     44),
+        tx('m2_dentist',   '80.00',    'Dental Check-up',             'Smiles Dental Dublin',     'health',       48),
 
-        // === MONTH 3 (61-90 days ago) ===
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_income3`,
-          amount: '-3400.00',
-          currency: 'EUR',
-          description: 'Salary Payment - October',
-          merchantName: 'Employer GmbH',
-          category: 'income',
-          confidence: '0.99',
-          transactionDate: new Date(now - 2 * month - 5 * day),
-          isSubscriptionPayment: false,
-          direction: 'in'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m3_1`,
-          amount: '13.49',
-          currency: 'EUR',
-          description: 'Netflix Subscription',
-          merchantName: 'Netflix',
-          category: 'streaming',
-          confidence: '0.95',
-          transactionDate: new Date(now - 2 * month - 15 * day),
-          isSubscriptionPayment: true,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m3_2`,
-          amount: '88.00',
-          currency: 'EUR',
-          description: 'Groceries',
-          merchantName: 'Aldi',
-          category: 'groceries',
-          confidence: '0.87',
-          transactionDate: new Date(now - 2 * month - 12 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m3_3`,
-          amount: '105.00',
-          currency: 'EUR',
-          description: 'Utilities',
-          merchantName: 'Power Company',
-          category: 'utilities',
-          confidence: '0.95',
-          transactionDate: new Date(now - 2 * month - 10 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        },
-        {
-          userId,
-          bankConnectionId: bankConnection.id,
-          transactionId: `txn_demo_${now}_m3_4`,
-          amount: '45.00',
-          currency: 'EUR',
-          description: 'Shopping',
-          merchantName: 'Amazon',
-          category: 'shopping',
-          confidence: '0.89',
-          transactionDate: new Date(now - 2 * month - 18 * day),
-          isSubscriptionPayment: false,
-          direction: 'out'
-        }
+        // ── Month 3 (61–90 days ago) ──────────────────────────────────────────
+        tx('m3_salary',    '-3850.00', 'Salary — March 2026',        'Accenture Ireland Ltd',    'income',       63, false, 'in'),
+        tx('m3_rent',      '1400.00',  'Rent Payment March',          'Belgrove Property Mgmt',  'housing',      62),
+        tx('m3_elec',      '74.50',    'Electric Ireland Bill',       'Electric Ireland',         'utilities',    65),
+        tx('m3_gas',       '68.00',    'Gas Networks Bill',           'Gas Networks Ireland',     'utilities',    65),
+        tx('m3_broadband', '49.99',    'Vodafone Home Broadband',     'Vodafone Ireland',         'telecom',      66, true),
+        tx('m3_mobile',    '29.99',    'Vodafone Mobile Plan',        'Vodafone Ireland',         'telecom',      66, true),
+        tx('m3_groc1',     '78.60',    'Weekly Shop',                 'Tesco Superstore',         'groceries',    61),
+        tx('m3_groc2',     '63.40',    'Weekly Shop',                 'Lidl Ireland',             'groceries',    68),
+        tx('m3_groc3',     '49.80',    'Weekly Shop',                 'Aldi Ireland',             'groceries',    75),
+        tx('m3_groc4',     '72.20',    'Big Weekly Shop',             'Dunnes Stores',            'groceries',    82),
+        tx('m3_coffee1',   '5.20',     'Morning Coffee',              "Bewley's Café",            'dining',       63),
+        tx('m3_lunch1',    '14.50',    'Lunch Meeting',               'Piglet Wine Bar',          'dining',       65),
+        tx('m3_dinner1',   '89.00',    'Birthday Dinner',             'Chapter One Restaurant',   'dining',       70),
+        tx('m3_fuel',      '75.00',    'Fuel',                        'Circle K',                 'transport',    68),
+        tx('m3_iarnrod',   '24.00',    'Train to Cork',               'Iarnród Éireann',          'transport',    71),
+        tx('m3_netflix',   '13.49',    'Netflix Standard',            'Netflix',                  'streaming',    70, true),
+        tx('m3_spotify',   '9.99',     'Spotify Premium',             'Spotify',                  'music',        70, true),
+        tx('m3_adobe',     '59.99',    'Adobe Creative Cloud',        'Adobe Systems',            'design',       70, true),
+        tx('m3_gym',       '49.99',    'Gym Plus Monthly',            'Gym Plus',                 'fitness',      70, true),
+        tx('m3_chatgpt',   '20.00',    'ChatGPT Plus',                'OpenAI',                   'productivity', 70, true),
+        tx('m3_notion',    '8.00',     'Notion Pro',                  'Notion',                   'productivity', 70, true),
+        tx('m3_nordvpn',   '3.99',     'NordVPN Monthly',             'NordVPN',                  'security',     70, true),
+        tx('m3_homeware',  '67.00',    'Homeware',                    'IKEA Dublin',              'shopping',     74),
+        tx('m3_books',     '28.50',    'Books',                       'Easons',                   'shopping',     80),
+        tx('m3_pharmacy',  '18.90',    'Pharmacy',                    'Lloyds Pharmacy',          'health',       76),
+
+        // ── Month 4 (91–120 days ago) ─────────────────────────────────────────
+        tx('m4_salary',    '-3850.00', 'Salary — February 2026',     'Accenture Ireland Ltd',    'income',       93, false, 'in'),
+        tx('m4_rent',      '1400.00',  'Rent Payment Feb',            'Belgrove Property Mgmt',  'housing',      92),
+        tx('m4_elec',      '97.00',    'Electric Ireland Bill',       'Electric Ireland',         'utilities',    95),
+        tx('m4_gas',       '72.00',    'Gas Networks Bill',           'Gas Networks Ireland',     'utilities',    95),
+        tx('m4_broadband', '49.99',    'Vodafone Home Broadband',     'Vodafone Ireland',         'telecom',      96, true),
+        tx('m4_mobile',    '29.99',    'Vodafone Mobile Plan',        'Vodafone Ireland',         'telecom',      96, true),
+        tx('m4_groc1',     '84.40',    'Weekly Shop',                 'Tesco Superstore',         'groceries',    91),
+        tx('m4_groc2',     '57.80',    'Weekly Shop',                 'Lidl Ireland',             'groceries',    98),
+        tx('m4_groc3',     '64.20',    'Weekly Shop',                 'Aldi Ireland',             'groceries',   105),
+        tx('m4_groc4',     '51.60',    'Weekly Shop',                 'Dunnes Stores',            'groceries',   112),
+        tx('m4_coffee1',   '5.10',     'Morning Coffee',              'Costa Coffee',             'dining',       93),
+        tx('m4_vday',      '145.00',   'Valentine\'s Dinner',        'Patrick Guilbaud',         'dining',       99),
+        tx('m4_lunch1',    '11.80',    'Lunch',                       'Spar',                     'dining',       95),
+        tx('m4_fuel',      '88.00',    'Fuel',                        'Applegreen',               'transport',    98),
+        tx('m4_luas',      '38.00',    'Luas Monthly Leap Top-up',    'Transport for Ireland',    'transport',    93),
+        tx('m4_netflix',   '13.49',    'Netflix Standard',            'Netflix',                  'streaming',   100, true),
+        tx('m4_spotify',   '9.99',     'Spotify Premium',             'Spotify',                  'music',       100, true),
+        tx('m4_adobe',     '59.99',    'Adobe Creative Cloud',        'Adobe Systems',            'design',      100, true),
+        tx('m4_gym',       '49.99',    'Gym Plus Monthly',            'Gym Plus',                 'fitness',     100, true),
+        tx('m4_icloud',    '2.99',     'iCloud+ 200GB',               'Apple',                    'cloud',       100, true),
+        tx('m4_atm',       '80.00',    'ATM Withdrawal',              'Bank of Ireland ATM',      'cash',         97),
+        tx('m4_optician',  '180.00',   'New Glasses',                 'Specsavers Dublin',        'health',      104),
+
+        // ── Month 5 (121–150 days ago) ────────────────────────────────────────
+        tx('m5_salary',    '-3850.00', 'Salary — January 2026',      'Accenture Ireland Ltd',    'income',      123, false, 'in'),
+        tx('m5_rent',      '1400.00',  'Rent Payment Jan',            'Belgrove Property Mgmt',  'housing',     122),
+        tx('m5_elec',      '105.00',   'Electric Ireland Bill',       'Electric Ireland',         'utilities',   125),
+        tx('m5_gas',       '79.00',    'Gas Bill (cold snap)',        'Gas Networks Ireland',     'utilities',   125),
+        tx('m5_broadband', '49.99',    'Vodafone Home Broadband',     'Vodafone Ireland',         'telecom',     126, true),
+        tx('m5_mobile',    '29.99',    'Vodafone Mobile Plan',        'Vodafone Ireland',         'telecom',     126, true),
+        tx('m5_groc1',     '91.20',    'Weekly Shop',                 'Tesco Superstore',         'groceries',   121),
+        tx('m5_groc2',     '62.50',    'Weekly Shop',                 'Lidl Ireland',             'groceries',   128),
+        tx('m5_groc3',     '58.80',    'Weekly Shop',                 'Aldi Ireland',             'groceries',   135),
+        tx('m5_groc4',     '74.30',    'New Year Big Shop',           'Dunnes Stores',            'groceries',   142),
+        tx('m5_coffee1',   '5.80',     'Coffee',                      "Bewley's Café",            'dining',      123),
+        tx('m5_nye',       '112.00',   'New Year Eve Dinner',         'The Greenhouse',           'dining',      121),
+        tx('m5_fuel',      '76.50',    'Fuel',                        'Circle K',                 'transport',   128),
+        tx('m5_netflix',   '13.49',    'Netflix Standard',            'Netflix',                  'streaming',   130, true),
+        tx('m5_spotify',   '9.99',     'Spotify Premium',             'Spotify',                  'music',       130, true),
+        tx('m5_adobe',     '59.99',    'Adobe Creative Cloud',        'Adobe Systems',            'design',      130, true),
+        tx('m5_gym',       '49.99',    'Gym Plus Monthly',            'Gym Plus',                 'fitness',     130, true),
+        tx('m5_chatgpt',   '20.00',    'ChatGPT Plus',                'OpenAI',                   'productivity',130, true),
+        tx('m5_amazon',    '89.90',    'Amazon Prime Annual',         'Amazon',                   'shopping',    125, true),
+        tx('m5_xmas',      '320.00',   'Christmas Gifts (Jan card)',  'Various',                  'shopping',    122),
+
+        // ── Month 6 (151–180 days ago) ────────────────────────────────────────
+        tx('m6_salary',    '-3850.00', 'Salary — December 2025',     'Accenture Ireland Ltd',    'income',      153, false, 'in'),
+        tx('m6_bonus',     '-1200.00', 'Year-End Bonus',             'Accenture Ireland Ltd',    'income',      153, false, 'in'),
+        tx('m6_rent',      '1400.00',  'Rent Payment Dec',            'Belgrove Property Mgmt',  'housing',     152),
+        tx('m6_elec',      '88.50',    'Electric Ireland Bill',       'Electric Ireland',         'utilities',   155),
+        tx('m6_gas',       '61.00',    'Gas Bill',                    'Gas Networks Ireland',     'utilities',   155),
+        tx('m6_broadband', '49.99',    'Vodafone Home Broadband',     'Vodafone Ireland',         'telecom',     156, true),
+        tx('m6_mobile',    '29.99',    'Vodafone Mobile Plan',        'Vodafone Ireland',         'telecom',     156, true),
+        tx('m6_groc1',     '95.40',    'Weekly Shop',                 'Tesco Superstore',         'groceries',   151),
+        tx('m6_groc2',     '68.20',    'Weekly Shop',                 'Lidl Ireland',             'groceries',   158),
+        tx('m6_groc3',     '72.60',    'Pre-Xmas Big Shop',           'Dunnes Stores',            'groceries',   165),
+        tx('m6_coffee1',   '5.40',     'Coffee',                      'Costa Coffee',             'dining',      153),
+        tx('m6_xmasdinner','156.00',   'Christmas Dinner Out',        'The Marker Hotel',         'dining',      159),
+        tx('m6_fuel',      '84.00',    'Fuel',                        'Applegreen',               'transport',   158),
+        tx('m6_netflix',   '13.49',    'Netflix Standard',            'Netflix',                  'streaming',   160, true),
+        tx('m6_spotify',   '9.99',     'Spotify Premium',             'Spotify',                  'music',       160, true),
+        tx('m6_adobe',     '59.99',    'Adobe Creative Cloud',        'Adobe Systems',            'design',      160, true),
+        tx('m6_gym',       '49.99',    'Gym Plus Monthly',            'Gym Plus',                 'fitness',     160, true),
+        tx('m6_icloud',    '2.99',     'iCloud+ 200GB',               'Apple',                    'cloud',       160, true),
+        tx('m6_github',    '4.00',     'GitHub Pro Monthly',          'GitHub',                   'developer',   160, true),
+        tx('m6_gifts',     '240.00',   'Christmas Gifts',             'Brown Thomas',             'shopping',    157),
+        tx('m6_travel',    '189.00',   'Ryanair Flights — New Year',  'Ryanair',                  'transport',   162),
       ];
 
       const createdTransactions = [];
@@ -1972,10 +1967,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalIncome = totalExpenses * 3;
       }
       
+      const subscriptionExpenses = Object.entries(expensesByCategory)
+        .filter(([cat]) => ['streaming', 'music', 'cloud', 'productivity', 'developer',
+          'design', 'security', 'health', 'fitness', 'finance', 'shopping', 'telecom',
+          'software', 'insurance', 'subscriptions'].includes(cat))
+        .reduce((sum, [, amount]) => sum + amount, 0);
+
       res.json({
         totalIncome: Math.round(totalIncome * 100) / 100,
         totalExpenses: Math.round(totalExpenses * 100) / 100,
         netCashflow: Math.round((totalIncome - totalExpenses) * 100) / 100,
+        subscriptionExpenses: Math.round(subscriptionExpenses * 100) / 100,
         expensesByCategory: Object.entries(expensesByCategory).map(([category, amount]) => ({
           category,
           amount: Math.round(amount * 100) / 100,
