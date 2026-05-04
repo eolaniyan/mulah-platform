@@ -10,6 +10,8 @@
   "scripts": {
     "dev:finance-web": "pnpm --dir apps/finance-web dev",
     "dev:finance-mobile": "pnpm --dir apps/finance-mobile start",
+    "typecheck:finance-mobile": "pnpm --dir apps/finance-mobile typecheck",
+    "typecheck:shared-logic": "pnpm --filter @mulah/shared-logic run typecheck",
     "dev:signals": "pnpm --dir apps/signals dev",
     "dev:subscription-web": "pnpm --dir apps/subscription-web dev",
     "dev:invoice-web": "pnpm --dir apps/invoice-web dev",

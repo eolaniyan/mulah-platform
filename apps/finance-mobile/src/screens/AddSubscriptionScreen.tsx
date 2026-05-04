@@ -29,11 +29,11 @@ export default function AddSubscriptionScreen() {
     queryFn: () => categoriesApi.getAll(),
   });
 
-  const categories: Category[] = (rawCategories as Array<Record<string, unknown>>).map((c) => ({
-    id: String(c.id ?? ''),
-    name: String(c.name ?? ''),
-    icon: String(c.icon ?? '📁'),
-    color: String(c.color ?? colors.teal[500]),
+  const categories: Category[] = rawCategories.map((c) => ({
+    id: String((c as { id?: number | string }).id ?? ''),
+    name: String((c as { name?: string }).name ?? ''),
+    icon: String((c as { icon?: string }).icon ?? '📁'),
+    color: String((c as { color?: string }).color ?? colors.teal[500]),
   }));
 
   const { data: services = [] } = useQuery<ServiceDirectory[]>({

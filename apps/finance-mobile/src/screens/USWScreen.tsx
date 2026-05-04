@@ -17,7 +17,7 @@ export default function USWScreen() {
     queryFn: () => configApi.get(),
   });
 
-  const uswConfig: USWConfig = config?.usw_fees || {
+  const defaultUsw: USWConfig = {
     baseFee: 3.99,
     premiumFee: 1.99,
     percentageFee: 0.02,
@@ -25,6 +25,11 @@ export default function USWScreen() {
     currency: 'EUR',
     maxNonPremiumCharge: 200,
   };
+  const fees = config?.usw_fees;
+  const uswConfig: USWConfig =
+    fees && typeof fees === 'object' && 'baseFee' in fees
+      ? { ...defaultUsw, ...(fees as Partial<USWConfig>) }
+      : defaultUsw;
 
   const monthlyTotal = analytics?.monthlyTotal ?? 0;
   const baseFee = uswConfig.baseFee;

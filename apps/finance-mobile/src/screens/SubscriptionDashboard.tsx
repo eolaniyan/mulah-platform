@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSubscriptions, useAnalyticsSummary } from '@mulah/shared-logic';
 import { colors, spacing, fontSize, fontWeight, borderRadius, shadows } from '../lib/theme';
-import type { Subscription } from '../types';
+import type { Subscription } from '@mulah/shared-logic';
 
 export default function SubscriptionDashboard() {
   const navigation = useNavigation<any>();
