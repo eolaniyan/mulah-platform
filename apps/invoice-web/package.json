@@ -1,0 +1,11 @@
+{
+  "name": "@mulah/invoice-web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "echo \"TODO: implement Mulah Invoice web app\"",
+    "build": "echo \"TODO: implement build\"",
+    "lint": "echo \"TODO: implement lint\""
+  }
+}
+

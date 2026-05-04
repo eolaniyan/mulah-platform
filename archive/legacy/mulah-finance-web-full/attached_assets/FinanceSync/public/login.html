@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Login - Mulah</title>
+  <style>
+    .gradient-bg {
+      background: linear-gradient(135deg, #10B981 0%, #0F172A 100%);
+    }
+    .form-transition {
+      transition: all 0.3s ease-in-out;
+    }
+    .plan-badge {
+      background: linear-gradient(135deg, #10B981 0%, #0F172A 100%);
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+  <div class="max-w-md w-full mx-4">
+    <!-- Logo and Title -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">Ⓜ️ Mulah</h1>
+      <p class="text-gray-600">Simplify your spending. Amplify your peace.</p>
+    </div>
+
+    <!-- Selected Plan Indicator (shown when coming from pricing) -->
+    <div id="planIndicator" class="hidden mb-6">
+      <div class="plan-badge text-white p-4 rounded-lg text-center">
+        <div class="text-sm opacity-90">Selected Plan</div>
+        <div id="planName" class="font-bold text-lg"></div>
+        <div id="planPrice" class="text-sm opacity-90"></div>
+      </div>
+    </div>
+
+    <!-- Demo User Selection (only shown for demo flow) -->
+    <div id="demoSelection" class="hidden bg-white rounded-xl shadow-lg p-6 mb-6">
+      <h3 class="font-semibold text-gray-800 mb-4 text-center">🎯 Choose Demo Experience</h3>
+      <div class="grid grid-cols-1 gap-4">
+        <button onclick="loginDemo('free@demo.com', 'demo123')" 
+                class="p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors text-left">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl mb-1">🆓</div>
+              <div class="font-medium text-gray-800">Free Demo</div>
+              <div class="text-xs text-gray-600">Basic subscription tracking</div>
+            </div>
+            <div class="text-sm text-blue-600 font-medium">Try Now →</div>
+          </div>
+        </button>
+        <button onclick="loginDemo('premium@demo.com', 'demo123')" 
+                class="p-4 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors text-left">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl mb-1">⭐</div>
+              <div class="font-medium text-gray-800">Premium Demo</div>
+              <div class="text-xs text-gray-600">All features + realistic data</div>
+            </div>
+            <div class="text-sm text-purple-600 font-medium">Try Now →</div>
+          </div>
+        </button>
+      </div>
+      <div class="text-center mt-4">
+        <button id="showLoginFromDemo" class="text-emerald-600 hover:text-emerald-800 font-medium text-sm">
+          Already have an account? Sign in instead
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Form Container -->
+    <div id="formContainer" class="bg-white rounded-xl shadow-lg p-8 form-transition">
+      <!-- Login Form -->
+      <div id="loginSection">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+          <p class="text-gray-600">Sign in to access your financial dashboard</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="email" required
+                   class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none transition-colors"
+                   placeholder="Enter your email">
+          </div>
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input type="password" id="password" required
+                   class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none transition-colors"
+                   placeholder="Enter your password">
+          </div>
+          <button type="submit" 
+                  class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
+            Sign In
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <p class="text-gray-600 text-sm">Don't have an account? 
+            <button id="showRegister" class="text-emerald-600 hover:text-emerald-800 font-medium">Create Account</button>
+          </p>
+        </div>
+      </div>
+
+      <!-- Register Form (Hidden by default) -->
+      <div id="registerSection" class="hidden">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Create Account</h2>
+          <p class="text-gray-600">Join Mulah and simplify your financial life</p>
+        </div>
+
+        <!-- Plan Confirmation (shown during registration) -->
+        <div id="planConfirmation" class="hidden mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+          <div class="text-center">
+            <div class="text-sm text-indigo-600 mb-1">You'll start with</div>
+            <div id="confirmPlanName" class="font-semibold text-indigo-800"></div>
+            <div id="confirmPlanDetails" class="text-xs text-indigo-600 mt-1"></div>
+          </div>
+        </div>
+
+        <form id="registerForm" class="space-y-4">
+          <div>
+            <label for="regName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input type="text" id="regName" required
+                   class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none transition-colors"
+                   placeholder="Enter your full name">
+          </div>
+          <div>
+            <label for="regEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="regEmail" required
+                   class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none transition-colors"
+                   placeholder="Enter your email">
+          </div>
+          <div>
+            <label for="regPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input type="password" id="regPassword" required
+                   class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none transition-colors"
+                   placeholder="Create a password">
+          </div>
+          <button type="submit" 
+                  class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
+            Create Account
+          </button>
+        </form>
+
+        <!-- Registration Confirmation -->
+        <div id="registrationNext" class="hidden mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <div class="text-center">
+            <div class="text-green-800 font-medium mb-2">🎉 Almost there!</div>
+            <div class="text-sm text-green-700 mb-3">Click "Create Account" to complete your registration</div>
+            <div id="finalPlanSummary" class="text-xs text-green-600"></div>
+          </div>
+        </div>
+
+        <div class="mt-6 text-center">
+          <p class="text-gray-600 text-sm">Already have an account? 
+            <button id="showLogin" class="text-emerald-600 hover:text-emerald-800 font-medium">Sign In</button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Area -->
+    <div id="notification" class="hidden mt-4 p-3 rounded-lg"></div>
+  </div>
+
+  <script>
+    // Parse URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const showDemo = urlParams.get('demo') === 'true';
+    const showSignup = urlParams.get('signup') === 'true';
+    const selectedPlan = urlParams.get('plan');
+
+    // Plan details
+    const planDetails = {
+      free: { name: 'Free Plan', price: '€0/month', details: 'Up to 15 subscriptions, basic insights' },
+      basic: { name: 'Basic Plan', price: '€4.99/month', details: 'Unlimited subscriptions, advanced analytics' },
+      pro: { name: 'Pro Plan', price: '€12.99/month', details: 'Everything + USW, exclusive discounts' }
+    };
+
+    // Initialize page based on URL parameters
+    document.addEventListener('DOMContentLoaded', function() {
+      if (showDemo) {
+        // Show demo selection instead of forms
+        document.getElementById('demoSelection').classList.remove('hidden');
+        document.getElementById('formContainer').classList.add('hidden');
+      } else if (showSignup || selectedPlan) {
+        // Show registration form by default for Get Started or pricing card clicks
+        switchToRegister();
+        
+        // Show selected plan if coming from pricing
+        if (selectedPlan && planDetails[selectedPlan]) {
+          showPlanIndicator(selectedPlan);
+          showPlanConfirmation(selectedPlan);
+        } else if (showSignup && !selectedPlan) {
+          // Default to free plan for Get Started button
+          showPlanIndicator('free');
+          showPlanConfirmation('free');
+        }
+      }
+    });
+
+    // Show plan indicator
+    function showPlanIndicator(plan) {
+      const planData = planDetails[plan];
+      document.getElementById('planName').textContent = planData.name;
+      document.getElementById('planPrice').textContent = planData.price;
+      document.getElementById('planIndicator').classList.remove('hidden');
+    }
+
+    // Show plan confirmation in registration
+    function showPlanConfirmation(plan) {
+      const planData = planDetails[plan];
+      document.getElementById('confirmPlanName').textContent = planData.name;
+      document.getElementById('confirmPlanDetails').textContent = planData.details;
+      document.getElementById('planConfirmation').classList.remove('hidden');
+      
+      // Update final summary
+      document.getElementById('finalPlanSummary').textContent = 
+        `You'll be signed up for ${planData.name} (${planData.price})`;
+    }
+
+    // Demo login function - direct login without showing form
+    async function loginDemo(email, password) {
+      try {
+        showNotification('Logging into demo account...', 'info');
+        
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('userPlan', data.user.plan);
+          
+          showNotification('Demo login successful! Loading dashboard... 🎯');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } else {
+          showNotification(data.error || 'Demo login failed', 'error');
+        }
+      } catch (error) {
+        console.error('Demo login error:', error);
+        showNotification('Demo login failed. Please try again.', 'error');
+      }
+    }
+
+    // Switch to register form
+    function switchToRegister() {
+      const loginSection = document.getElementById('loginSection');
+      const registerSection = document.getElementById('registerSection');
+
+      loginSection.classList.add('hidden');
+      registerSection.classList.remove('hidden');
+    }
+
+    // Form switching with smooth transitions
+    document.getElementById('showRegister').addEventListener('click', () => {
+      switchToRegister();
+    });
+
+    document.getElementById('showLogin').addEventListener('click', () => {
+      const loginSection = document.getElementById('loginSection');
+      const registerSection = document.getElementById('registerSection');
+
+      registerSection.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+    });
+
+    document.getElementById('showLoginFromDemo').addEventListener('click', () => {
+      document.getElementById('demoSelection').classList.add('hidden');
+      document.getElementById('formContainer').classList.remove('hidden');
+    });
+
+    // Notification system
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      let className = 'mt-4 p-3 rounded-lg ';
+      if (type === 'error') {
+        className += 'bg-red-100 text-red-700';
+      } else if (type === 'info') {
+        className += 'bg-blue-100 text-blue-700';
+      } else {
+        className += 'bg-green-100 text-green-700';
+      }
+      notification.className = className;
+      notification.textContent = message;
+      notification.classList.remove('hidden');
+      setTimeout(() => notification.classList.add('hidden'), 4000);
+    }
+
+    // Enhanced registration form handling
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+
+      // Show next step confirmation
+      document.getElementById('registrationNext').classList.remove('hidden');
+      
+      setTimeout(async () => {
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              name, 
+              email, 
+              password, 
+              plan: selectedPlan || 'free' 
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('userPlan', data.user.plan);
+            
+            showNotification('Account created successfully! Welcome to Mulah! 🎉');
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 1500);
+          } else {
+            document.getElementById('registrationNext').classList.add('hidden');
+            showNotification(data.error || 'Registration failed', 'error');
+          }
+        } catch (error) {
+          console.error('Registration error:', error);
+          document.getElementById('registrationNext').classList.add('hidden');
+          showNotification('Registration failed. Please try again.', 'error');
+        }
+      }, 1000);
+    });
+
+    // Login form handling
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('userPlan', data.user.plan);
+          
+          // Special message for demo users
+          const isDemoUser = email.includes('@demo.com');
+          if (isDemoUser) {
+            showNotification('Demo login successful! Exploring realistic data... 🎯');
+          } else {
+            showNotification('Login successful! Welcome back! ✨');
+          }
+          
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } else {
+          showNotification(data.error || 'Login failed', 'error');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        showNotification('Login failed. Please try again.', 'error');
+      }
+    });
+
+    // Auto-redirect if already logged in
+    if (localStorage.getItem('token') && !showDemo) {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>

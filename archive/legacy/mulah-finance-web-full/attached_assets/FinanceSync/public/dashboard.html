@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mulah Dashboard - Simplify your spending. Amplify your peace.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'gradient': 'gradient 6s ease infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    },
+                    backgroundSize: {
+                        '300%': '300% 300%',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-card {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background-size: 400% 400%;
+            animation: gradient 6s ease infinite;
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+        .modern-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .premium-gradient {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+        .success-gradient {
+            background: linear-gradient(135deg, #10B981 0%, #38ef7d 100%);
+        }
+        .warning-gradient {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .info-gradient {
+            background: linear-gradient(135deg, #10B981 0%, #0F172A 100%);
+        }
+        .mulah-primary {
+            background: linear-gradient(135deg, #10B981 0%, #0F172A 100%);
+        }
+        .mulah-accent {
+            background-color: #F0FDF4;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 min-h-screen">
+    <!-- Header -->
+    <header class="glass-effect border-b border-white/20 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <div class="text-3xl font-bold bg-gradient-to-r from-emerald-500 via-teal-600 to-green-600 bg-clip-text text-transparent animate-pulse-slow">
+                        Ⓜ️ Mulah
+                    </div>
+                    <div class="hidden sm:flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-xs text-gray-600 font-medium">Live</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-sm text-gray-700 font-medium px-3 py-1 bg-white/50 rounded-full"></span>
+                    <button id="logoutBtn" class="bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-2 rounded-full hover:from-red-600 hover:to-pink-700 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Navigation Tabs -->
+        <div class="glass-effect rounded-2xl p-2 mb-8 modern-shadow">
+            <nav class="flex space-x-2">
+                <button id="subscriptionsTab" class="tab-button bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg whitespace-nowrap py-3 px-6 rounded-xl font-medium text-sm transform transition-all duration-300 hover:scale-105">
+                    📱 Unified Subscription Wallet
+                </button>
+                <button id="transactionsTab" class="tab-button bg-white/50 text-gray-700 hover:bg-white/70 hover:text-gray-900 whitespace-nowrap py-3 px-6 rounded-xl font-medium text-sm transition-all duration-300 hover:shadow-md">
+                    💳 Transactions
+                </button>
+                <button id="insightsTab" class="tab-button bg-white/50 text-gray-700 hover:bg-white/70 hover:text-gray-900 whitespace-nowrap py-3 px-6 rounded-xl font-medium text-sm transition-all duration-300 hover:shadow-md">
+                    📊 Insights
+                </button>
+                <button id="profileTab" class="tab-button bg-white/50 text-gray-700 hover:bg-white/70 hover:text-gray-900 whitespace-nowrap py-3 px-6 rounded-xl font-medium text-sm transition-all duration-300 hover:shadow-md">
+                    👤 Profile
+                </button>
+                <button id="settingsTab" class="tab-button bg-white/50 text-gray-700 hover:bg-white/70 hover:text-gray-900 whitespace-nowrap py-3 px-6 rounded-xl font-medium text-sm transition-all duration-300 hover:shadow-md">
+                    ⚙️ Settings
+                </button>
+            </nav>
+        </div>
+
+        <!-- Subscriptions Tab -->
+        <div id="subscriptionsContent" class="tab-content">
+            <div class="glass-effect rounded-3xl modern-shadow p-8">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold bg-gradient-to-r from-emerald-800 to-teal-600 bg-clip-text text-transparent">Unified Subscription Wallet</h2>
+                        <p class="text-gray-600 mt-2">Simplify your spending. Amplify your peace. 🕊️</p>
+                    </div>
+                    <button id="generateDemoBtn" class="gradient-card text-white px-8 py-3 rounded-2xl hover:shadow-2xl font-medium transition-all duration-300 transform hover:scale-105 animate-float">
+                        🎲 Generate Demo Data
+                    </button>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                    <div class="info-gradient p-8 rounded-2xl text-white card-hover modern-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-blue-100 mb-2">Monthly Total</p>
+                                <p id="total" class="text-4xl font-bold">€0.00</p>
+                            </div>
+                            <div class="text-5xl animate-bounce-slow">💰</div>
+                        </div>
+                    </div>
+                    <div class="success-gradient p-8 rounded-2xl text-white card-hover modern-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-green-100 mb-2">Active Subscriptions</p>
+                                <p id="activeCount" class="text-4xl font-bold">0</p>
+                            </div>
+                            <div class="text-5xl animate-bounce-slow">📱</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Subscription Form -->
+                <div class="bg-gray-50 p-6 rounded-lg mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Add New Subscription</h3>
+                    <form id="subForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="relative">
+                            <input type="text" id="name" name="name" placeholder="Service name (e.g., Netflix)" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            <div id="suggestions" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+                        </div>
+                        <input type="number" id="cost" name="cost" placeholder="Cost (€)" step="0.01" min="0.01" max="10000"
+                               class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <select id="cycle" name="cycle" 
+                                class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            <option value="">Billing cycle</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        <div class="flex space-x-2">
+                            <select id="nextMonth" name="nextMonth" 
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                <option value="">Month</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select id="nextDay" name="nextDay" 
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                <option value="">Day</option>
+                                <option value="1">1st</option>
+                                <option value="5">5th</option>
+                                <option value="10">10th</option>
+                                <option value="15">15th</option>
+                                <option value="20">20th</option>
+                                <option value="25">25th</option>
+                                <option value="28">28th</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 font-medium">
+                            Add Subscription
+                        </button>
+                    </form>
+                    <div id="selectedTier" class="mt-4 p-3 bg-gray-50 text-gray-600 rounded-md text-sm border">
+                        Select a service first
+                    </div>
+                </div>
+
+                <!-- Subscriptions List -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Cycle</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Renewal Date</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subsBody" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                    Loading subscriptions...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mulah Feature Previews -->
+                <div id="mulahFeatures" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="mulah-primary p-6 rounded-2xl text-white card-hover modern-shadow">
+                        <div class="text-center">
+                            <div class="text-4xl mb-3">🔗</div>
+                            <h3 class="text-lg font-bold mb-2">Unified Subscription Wallet</h3>
+                            <p class="text-sm text-emerald-100 mb-4">Pay all subscriptions with one monthly charge</p>
+                            <div class="text-xs bg-white/20 rounded-full px-3 py-1">Coming in v2.0</div>
+                        </div>
+                    </div>
+                    <div class="mulah-primary p-6 rounded-2xl text-white card-hover modern-shadow">
+                        <div class="text-center">
+                            <div class="text-4xl mb-3">⚡</div>
+                            <h3 class="text-lg font-bold mb-2">Mulah Mesh</h3>
+                            <p class="text-sm text-emerald-100 mb-4">Merchant date realignment for perfect budgeting</p>
+                            <div class="text-xs bg-white/20 rounded-full px-3 py-1">Premium Feature</div>
+                        </div>
+                    </div>
+                    <div class="mulah-primary p-6 rounded-2xl text-white card-hover modern-shadow">
+                        <div class="text-center">
+                            <div class="text-4xl mb-3">💰</div>
+                            <h3 class="text-lg font-bold mb-2">Mulah Flex</h3>
+                            <p class="text-sm text-emerald-100 mb-4">Klarna-style payment buffer for cash flow</p>
+                            <div class="text-xs bg-white/20 rounded-full px-3 py-1">Pro Feature</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="upgradePrompt" class="mt-6 hidden bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                    <p class="text-sm text-emerald-800 font-medium">🚀 Ready for Mulah Premium? Get USW access and advanced features!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="transactionsContent" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Transactions</h2>
+                        <p class="text-gray-600">Your financial activity from bank integrations</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <div class="text-sm text-blue-600 bg-blue-50 px-4 py-2 rounded-lg border">
+                            💡 Transactions sync automatically via bank integration
+                        </div>
+                        <button id="demoTransactionsBtn" class="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-green-600 hover:to-blue-700 font-medium shadow-md transition-all text-sm">
+                            🎲 Generate 6 Months Demo Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Transaction Filters -->
+                <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <input type="text" id="globalTransactionSearch" placeholder="Search transactions..." 
+                               class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select id="dateFilter" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="7d">Last 7 days</option>
+                            <option value="30d" selected>Last 30 days</option>
+                            <option value="60d">Last 60 days</option>
+                            <option value="90d">Last 90 days</option>
+                            <option value="custom">Custom range</option>
+                        </select>
+                        <select id="categoryFilter" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">All categories</option>
+                            <option value="Groceries">Groceries</option>
+                            <option value="Transport - Fuel">Transport - Fuel</option>
+                            <option value="Transport - Ride">Transport - Ride</option>
+                            <option value="Subscriptions">Subscriptions</option>
+                            <option value="Dining">Dining</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Bills & Utilities">Bills & Utilities</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Entertainment">Entertainment</option>
+                        </select>
+                        <select id="sortFilter" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="date-desc" selected>Newest first</option>
+                            <option value="date-asc">Oldest first</option>
+                            <option value="amount-desc">Highest amount</option>
+                            <option value="amount-asc">Lowest amount</option>
+                            <option value="merchant-asc">Merchant A-Z</option>
+                            <option value="category-asc">Category A-Z</option>
+                        </select>
+                    </div>
+                    <div id="customDateRange" class="hidden grid grid-cols-2 gap-4 mb-4">
+                        <input type="date" id="fromDate" placeholder="From date" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="date" id="toDate" placeholder="To date" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div id="filterSummary" class="text-sm text-gray-600"></div>
+                        <button id="resetFilters" class="text-sm text-indigo-600 hover:text-indigo-800">Reset Filters</button>
+                    </div>
+                </div>
+
+                <!-- Transactions List -->
+                <div id="transactionsList" class="space-y-4 mb-6">
+                    <div class="text-center py-8 text-gray-500">
+                        <p class="text-lg mb-2">Loading transactions...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination" class="flex justify-center items-center mt-8 space-x-2 hidden"></div>
+            </div>
+        </div>
+
+        <!-- Insights Tab -->
+        <div id="insightsContent" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Financial Insights</h2>
+                        <p class="text-gray-600">Advanced analytics of your spending patterns</p>
+                    </div>
+                    <select id="periodSelect" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="30d">Last 30 days</option>
+                        <option value="60d">Last 60 days</option>
+                        <option value="90d">Last 90 days</option>
+                    </select>
+                </div>
+
+                <!-- Key Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-blue-600">Total Spend</p>
+                                <p id="totalSpend" class="text-3xl font-bold text-blue-900">€0.00</p>
+                            </div>
+                            <div class="text-3xl">💰</div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg border border-green-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-green-600">Total Transactions</p>
+                                <p id="totalTransactions" class="text-3xl font-bold text-green-900">0</p>
+                            </div>
+                            <div class="text-3xl">📊</div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-lg border border-emerald-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-emerald-600">Mulah DNA Score</p>
+                                <p id="mulahDnaScore" class="text-xl font-bold text-emerald-900">85/100</p>
+                            </div>
+                            <div class="text-3xl">🧬</div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-lg border border-orange-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-orange-600">Avg Daily</p>
+                                <p id="avgDaily" class="text-2xl font-bold text-orange-900">€0.00</p>
+                            </div>
+                            <div class="text-3xl">📈</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Insights Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Spending Analysis -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Spending Analysis</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">Spending Patterns</h4>
+                                <div id="spendingPatternsCard" class="space-y-2">
+                                    <p class="text-gray-500 text-sm">Loading...</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">Weekday vs Weekend</h4>
+                                <div id="weekdayAnalysisCard" class="space-y-2">
+                                    <p class="text-gray-500 text-sm">Loading...</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">Merchant Insights</h4>
+                                <div id="merchantInsightsCard" class="space-y-2">
+                                    <p class="text-gray-500 text-sm">Loading...</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">Budget Health</h4>
+                                <div id="budgetHealthCard" class="space-y-2">
+                                    <p class="text-gray-500 text-sm">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown Chart -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">💳 Spending by Category</h3>
+                        <div class="h-64">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deep Dive Section -->
+                <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 rounded-xl p-8 text-white mb-8">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">🚀 Deep Dive Analytics</h3>
+                            <p class="text-blue-200">Unlock advanced financial intelligence with comprehensive analysis</p>
+                            <div class="mt-4">
+                                <p class="text-lg font-semibold">Total Projected Monthly: <span id="projectedMonthly" class="text-green-400">€0.00</span></p>
+                            </div>
+                        </div>
+                        <button onclick="openDeepDive()" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg">
+                            🔬 Launch Deep Dive
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">💡 Smart Recommendations</h3>
+                    <div id="recommendationsContainer" class="space-y-4">
+                        <div class="text-center py-8 text-gray-500">
+                            <p class="text-lg mb-2">🔍 Analyzing your spending...</p>
+                            <p class="text-sm">Recommendations will appear after analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profileContent" class="tab-content hidden">
+            <!-- Profile content will be dynamically loaded -->
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsContent" class="tab-content hidden">
+            <!-- Settings content will be dynamically loaded -->
+        </div>
+    </main>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

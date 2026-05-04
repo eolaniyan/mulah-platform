@@ -1,0 +1,11 @@
+{
+  "name": "@mulah/subscription-web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "echo \"TODO: implement Mulah Subscription web app\"",
+    "build": "echo \"TODO: implement build\"",
+    "lint": "echo \"TODO: implement lint\""
+  }
+}
+

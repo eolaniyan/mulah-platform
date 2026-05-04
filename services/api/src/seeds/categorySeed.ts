@@ -1,0 +1,25 @@
+import type { InsertCategory } from "@shared/schema";
+
+export const categorySeed: InsertCategory[] = [
+  { name: "Groceries", slug: "groceries", icon: "fa-shopping-cart", color: "#22C55E", isSystem: true },
+  { name: "Subscriptions", slug: "subscriptions", icon: "fa-repeat", color: "#8B5CF6", isSystem: true },
+  { name: "Transport", slug: "transport", icon: "fa-car", color: "#3B82F6", isSystem: true },
+  { name: "Rent", slug: "rent", icon: "fa-home", color: "#EF4444", isSystem: true },
+  { name: "Utilities", slug: "utilities", icon: "fa-bolt", color: "#F59E0B", isSystem: true },
+  { name: "Dining", slug: "dining", icon: "fa-utensils", color: "#EC4899", isSystem: true },
+  { name: "Entertainment", slug: "entertainment", icon: "fa-film", color: "#06B6D4", isSystem: true },
+  { name: "Fitness", slug: "fitness", icon: "fa-dumbbell", color: "#10B981", isSystem: true },
+  { name: "Healthcare", slug: "healthcare", icon: "fa-heart", color: "#F43F5E", isSystem: true },
+  { name: "Shopping", slug: "shopping", icon: "fa-bag-shopping", color: "#A855F7", isSystem: true },
+  { name: "Insurance", slug: "insurance", icon: "fa-shield", color: "#6366F1", isSystem: true },
+  { name: "Income", slug: "income", icon: "fa-money-bill", color: "#16A34A", isSystem: true },
+  { name: "Cash", slug: "cash", icon: "fa-money-bills", color: "#84CC16", isSystem: true },
+  { name: "Transfers", slug: "transfers", icon: "fa-exchange-alt", color: "#64748B", isSystem: true },
+  { name: "Education", slug: "education", icon: "fa-graduation-cap", color: "#8B5CF6", isSystem: true },
+  { name: "Software", slug: "software", icon: "fa-laptop", color: "#3B82F6", isSystem: true },
+  { name: "Streaming", slug: "streaming", icon: "fa-play", color: "#E50914", isSystem: true },
+  { name: "Music", slug: "music", icon: "fa-music", color: "#1DB954", isSystem: true },
+  { name: "Gaming", slug: "gaming", icon: "fa-gamepad", color: "#7C3AED", isSystem: true },
+  { name: "Cloud Storage", slug: "cloud", icon: "fa-cloud", color: "#38BDF8", isSystem: true },
+  { name: "Other", slug: "other", icon: "fa-tag", color: "#6B7280", isSystem: true },
+];

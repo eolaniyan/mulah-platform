@@ -1,0 +1,815 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mulah - Smart Subscription Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    'mulah-teal': '#1B5A52',
+                    'mulah-gold': '#F59E0B',
+                    'mulah-light-teal': '#2DD4BF',
+                    'mulah-dark': '#0F172A',
+                    'mulah-gray': '#64748B'
+                },
+                fontFamily: {
+                    'sans': ['Inter', 'system-ui', 'sans-serif']
+                },
+                animation: {
+                    'slide-up': 'slideUp 0.3s ease-out',
+                    'fade-in': 'fadeIn 0.3s ease-out',
+                    'bounce-gentle': 'bounceGentle 0.6s ease-out',
+                    'pulse-glow': 'pulseGlow 2s infinite'
+                }
+            }
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes bounceGentle {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-5px); }
+            60% { transform: translateY(-3px); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.6); }
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Mobile App Container -->
+    <div class="max-w-sm mx-auto bg-white min-h-screen relative overflow-hidden">
+        
+        <!-- @COMPONENT: OnboardingScreen -->
+        <div id="onboarding-screen" class="absolute inset-0 bg-gradient-to-br from-mulah-teal to-mulah-light-teal z-50 flex flex-col justify-center items-center px-6 animate-fade-in">
+            <!-- Modern financial dashboard showing subscription analytics on mobile device -->
+            <div class="w-full h-64 bg-white/10 rounded-3xl mb-8 p-6 glass-effect">
+                <!-- Mulah Logo -->
+                <div class="flex items-center justify-center mb-6">
+                    <div class="w-16 h-16 bg-mulah-gold rounded-full flex items-center justify-center">
+                        <span class="text-mulah-teal text-2xl font-bold">M</span>
+                    </div>
+                </div>
+                
+                <!-- Mockup Phone Interface -->
+                <div class="bg-white/20 rounded-2xl p-4 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="w-20 h-3 bg-white/40 rounded"></div>
+                        <div class="w-12 h-3 bg-mulah-gold/80 rounded"></div>
+                    </div>
+                    <div class="w-full h-16 bg-white/30 rounded-xl"></div>
+                    <div class="flex space-x-2">
+                        <div class="flex-1 h-8 bg-white/25 rounded"></div>
+                        <div class="flex-1 h-8 bg-white/25 rounded"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-white mb-4">Mulah</h1>
+                <p class="text-white/90 text-lg mb-2">Smart Subscription Management</p>
+                <p class="text-white/70 text-sm">Track, manage, and optimize all your subscriptions in one place</p>
+            </div>
+            
+            <div class="w-full space-y-4">
+                <button onclick="showLogin()" class="w-full bg-mulah-gold text-mulah-teal py-4 rounded-2xl font-semibold text-lg transition-transform active:scale-95">
+                    Get Started
+                </button>
+                <button onclick="showDashboard()" class="w-full border-2 border-white/30 text-white py-4 rounded-2xl font-medium transition-transform active:scale-95">
+                    View Demo
+                </button>
+            </div>
+            
+            <div class="flex items-center justify-center space-x-2 mt-8">
+                <div class="w-8 h-1 bg-mulah-gold rounded"></div>
+                <div class="w-4 h-1 bg-white/40 rounded"></div>
+                <div class="w-4 h-1 bg-white/40 rounded"></div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: OnboardingScreen -->
+        
+        <!-- @COMPONENT: LoginScreen -->
+        <div id="login-screen" class="absolute inset-0 bg-white z-40 hidden">
+            <div class="flex flex-col h-full">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 bg-mulah-teal">
+                    <button onclick="showOnboarding()" class="text-white">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </button>
+                    <h2 class="text-white text-lg font-semibold">Welcome Back</h2>
+                    <div class="w-6"></div>
+                </div>
+                
+                <!-- Login Form -->
+                <div class="flex-1 p-6 space-y-6">
+                    <!-- Logo -->
+                    <div class="flex justify-center mb-8">
+                        <div class="w-20 h-20 bg-mulah-teal rounded-full flex items-center justify-center">
+                            <span class="text-mulah-gold text-3xl font-bold">M</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Fields -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" placeholder="Enter your email" class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-mulah-teal focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <input type="password" placeholder="Enter your password" class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-mulah-teal focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="space-y-4">
+                        <button onclick="showDashboard()" class="w-full bg-mulah-teal text-white py-4 rounded-xl font-semibold transition-transform active:scale-95">
+                            Sign In
+                        </button>
+                        
+                        <div class="text-center">
+                            <span class="text-gray-500">Don't have an account? </span>
+                            <button class="text-mulah-teal font-semibold">Sign Up</button>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-gray-200"></div>
+                            </div>
+                            <div class="relative flex justify-center text-sm">
+                                <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Social Login -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="flex items-center justify-center p-3 border border-gray-200 rounded-xl">
+                                <i class="fab fa-google text-red-500 mr-2"></i>
+                                <span class="text-sm font-medium">Google</span>
+                            </button>
+                            <button class="flex items-center justify-center p-3 border border-gray-200 rounded-xl">
+                                <i class="fab fa-apple text-gray-900 mr-2"></i>
+                                <span class="text-sm font-medium">Apple</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: LoginScreen -->
+        
+        <!-- @COMPONENT: MainDashboard -->
+        <div id="dashboard-screen" class="hidden">
+            <!-- Header -->
+            <div class="bg-mulah-teal px-6 pt-12 pb-6 text-white">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-3">
+                        <!-- Profile image placeholder with proper aspect ratio handling -->
+                        <div class="w-10 h-10 bg-mulah-gold rounded-full flex items-center justify-center">
+                            <span class="text-mulah-teal text-sm font-bold">JD</span>
+                        </div>
+                        <div>
+                            <p class="text-white/80 text-sm">Welcome back,</p>
+                            <p class="font-semibold" data-bind="user.name">John Doe</p>
+                        </div>
+                    </div>
+                    <button onclick="showNotifications()" class="relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <div class="absolute -top-1 -right-1 w-3 h-3 bg-mulah-gold rounded-full"></div>
+                    </button>
+                </div>
+                
+                <!-- Total Spending Card -->
+                <div class="bg-white/10 rounded-2xl p-6 glass-effect">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-white/80 text-sm">Monthly Spending</p>
+                            <p class="text-3xl font-bold" data-bind="spending.total">€247.89</p>
+                        </div>
+                        <div class="w-16 h-16 bg-mulah-gold/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-credit-card text-mulah-gold text-xl"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-1">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-white/80">vs Last Month</span>
+                                <span class="text-green-400">-€23.40</span>
+                            </div>
+                            <div class="w-full bg-white/20 rounded-full h-2">
+                                <div class="bg-green-400 h-2 rounded-full w-3/4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="px-6 py-4 -mt-8 relative z-10">
+                <div class="bg-white rounded-2xl p-6 card-shadow">
+                    <div class="grid grid-cols-3 gap-4">
+                        <button onclick="showAddSubscription()" class="flex flex-col items-center p-4 bg-mulah-teal/5 rounded-xl transition-transform active:scale-95">
+                            <div class="w-12 h-12 bg-mulah-teal rounded-full flex items-center justify-center mb-2">
+                                <i class="fas fa-plus text-white"></i>
+                            </div>
+                            <span class="text-xs font-medium text-mulah-teal">Add New</span>
+                        </button>
+                        
+                        <button onclick="showAnalytics()" class="flex flex-col items-center p-4 bg-mulah-gold/5 rounded-xl transition-transform active:scale-95">
+                            <div class="w-12 h-12 bg-mulah-gold rounded-full flex items-center justify-center mb-2">
+                                <i class="fas fa-chart-line text-white"></i>
+                            </div>
+                            <span class="text-xs font-medium text-mulah-gold">Analytics</span>
+                        </button>
+                        
+                        <button onclick="showUpcoming()" class="flex flex-col items-center p-4 bg-blue-50 rounded-xl transition-transform active:scale-95">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-2">
+                                <i class="fas fa-clock text-white"></i>
+                            </div>
+                            <span class="text-xs font-medium text-blue-500">Upcoming</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Subscriptions List -->
+            <div class="px-6 pb-24">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Active Subscriptions</h3>
+                    <span class="text-sm text-mulah-gray" data-bind="subscriptions.count">8 active</span>
+                </div>
+                
+                <div class="space-y-3">
+                    <!-- @MAP: subscriptions.map(subscription => ( -->
+                    <div class="bg-white rounded-xl p-4 card-shadow" data-mock="true">
+                        <div class="flex items-center space-x-4">
+                            <!-- Netflix subscription icon -->
+                            <div class="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center">
+                                <i class="fab fa-netflix text-white text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-semibold text-gray-900">Netflix</h4>
+                                    <span class="text-lg font-bold text-gray-900">€12.99</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-mulah-gray">Entertainment • Monthly</p>
+                                    <span class="text-sm text-mulah-gray">Next: Jan 15</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-4 card-shadow" data-mock="true">
+                        <div class="flex items-center space-x-4">
+                            <!-- Spotify subscription icon -->
+                            <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                                <i class="fab fa-spotify text-white text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-semibold text-gray-900">Spotify Premium</h4>
+                                    <span class="text-lg font-bold text-gray-900">€9.99</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-mulah-gray">Music • Monthly</p>
+                                    <span class="text-sm text-green-600">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-4 card-shadow" data-mock="true">
+                        <div class="flex items-center space-x-4">
+                            <!-- Adobe Creative Cloud subscription icon -->
+                            <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center">
+                                <i class="fab fa-adobe text-white text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-semibold text-gray-900">Adobe Creative Cloud</h4>
+                                    <span class="text-lg font-bold text-gray-900">€52.99</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-mulah-gray">Design • Monthly</p>
+                                    <span class="text-sm text-orange-600">Due in 3 days</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-4 card-shadow" data-mock="true">
+                        <div class="flex items-center space-x-4">
+                            <!-- Dropbox subscription icon -->
+                            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                                <i class="fab fa-dropbox text-white text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-semibold text-gray-900">Dropbox Plus</h4>
+                                    <span class="text-lg font-bold text-gray-900">€9.99</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-mulah-gray">Storage • Monthly</p>
+                                    <span class="text-sm text-mulah-gray">Next: Jan 20</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+                
+                <!-- Coming Soon Feature -->
+                <div class="mt-8 bg-gradient-to-r from-mulah-teal to-mulah-light-teal rounded-2xl p-6 text-white relative overflow-hidden animate-pulse-glow">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+                    <div class="relative">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-mulah-gold rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-magic text-mulah-teal"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">Unified Subscription Wallet</h4>
+                                <p class="text-white/80 text-sm">Coming Soon</p>
+                            </div>
+                        </div>
+                        <p class="text-white/90 text-sm mb-4">Pay all your subscriptions on one day, with one transaction. Take control of your spending like never before.</p>
+                        <button onclick="showWaitlist()" class="bg-mulah-gold text-mulah-teal px-6 py-2 rounded-xl font-semibold text-sm transition-transform active:scale-95">
+                            Join Waitlist
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: MainDashboard -->
+        
+        <!-- @COMPONENT: AddSubscriptionScreen -->
+        <div id="add-subscription-screen" class="absolute inset-0 bg-white z-30 hidden">
+            <div class="flex flex-col h-full">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 bg-white border-b border-gray-100">
+                    <button onclick="showDashboard()" class="text-mulah-gray">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                    <h2 class="text-lg font-semibold text-gray-900">Add Subscription</h2>
+                    <button class="text-mulah-teal font-semibold">Save</button>
+                </div>
+                
+                <!-- Form -->
+                <div class="flex-1 p-6 space-y-6">
+                    <!-- Service Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Select Service</label>
+                        <div class="grid grid-cols-4 gap-3">
+                            <button class="flex flex-col items-center p-3 border border-gray-200 rounded-xl hover:border-mulah-teal transition-colors">
+                                <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center mb-2">
+                                    <i class="fab fa-netflix text-white"></i>
+                                </div>
+                                <span class="text-xs">Netflix</span>
+                            </button>
+                            
+                            <button class="flex flex-col items-center p-3 border border-gray-200 rounded-xl hover:border-mulah-teal transition-colors">
+                                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mb-2">
+                                    <i class="fab fa-spotify text-white"></i>
+                                </div>
+                                <span class="text-xs">Spotify</span>
+                            </button>
+                            
+                            <button class="flex flex-col items-center p-3 border border-gray-200 rounded-xl hover:border-mulah-teal transition-colors">
+                                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mb-2">
+                                    <i class="fab fa-microsoft text-white"></i>
+                                </div>
+                                <span class="text-xs">Office 365</span>
+                            </button>
+                            
+                            <button class="flex flex-col items-center p-3 border border-mulah-teal bg-mulah-teal/5 rounded-xl">
+                                <div class="w-10 h-10 bg-mulah-teal rounded-lg flex items-center justify-center mb-2">
+                                    <i class="fas fa-plus text-white"></i>
+                                </div>
+                                <span class="text-xs">Custom</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Fields -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Service Name</label>
+                            <input type="text" placeholder="e.g., Netflix, Spotify" class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-mulah-teal focus:border-transparent">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Cost</label>
+                                <input type="number" placeholder="0.00" class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-mulah-teal focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                                <select class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-mulah-teal focus:border-transparent">
+                                    <option>EUR €</option>
+                                    <option>USD $</option>
+                                    <option>GBP £</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button class="p-3 border border-gray-200 rounded-xl text-center hover:border-mulah-teal transition-colors">
+                                    <span class="block text-sm font-medium">Monthly</span>
+                                </button>
+                                <button class="p-3 border border-mulah-teal bg-mulah-teal/5 rounded-xl text-center">
+                                    <span class="block text-sm font-medium text-mulah-teal">Yearly</span>
+                                </button>
+                                <button class="p-3 border border-gray-200 rounded-xl text-center hover:border-mulah-teal transition-colors">
+                                    <span class="block text-sm font-medium">Custom</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Next Billing Date</label>
+                            <input type="date" class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-mulah-teal focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                            <select class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-mulah-teal focus:border-transparent">
+                                <option>Entertainment</option>
+                                <option>Productivity</option>
+                                <option>Storage</option>
+                                <option>Music</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Save Button -->
+                <div class="p-6 border-t border-gray-100">
+                    <button onclick="showDashboard()" class="w-full bg-mulah-teal text-white py-4 rounded-xl font-semibold transition-transform active:scale-95">
+                        Add Subscription
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AddSubscriptionScreen -->
+        
+        <!-- @COMPONENT: AnalyticsScreen -->
+        <div id="analytics-screen" class="absolute inset-0 bg-white z-30 hidden">
+            <div class="flex flex-col h-full">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 bg-mulah-teal text-white">
+                    <button onclick="showDashboard()" class="text-white">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </button>
+                    <h2 class="text-lg font-semibold">Analytics</h2>
+                    <button class="text-white">
+                        <i class="fas fa-download text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Analytics Content -->
+                <div class="flex-1 p-6 space-y-6">
+                    <!-- Overview Cards -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white rounded-xl p-4 card-shadow">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-mulah-gray">This Month</span>
+                                <i class="fas fa-calendar-alt text-mulah-teal"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900" data-bind="analytics.thisMonth">€247.89</p>
+                            <p class="text-sm text-green-600">↓ 8.2% vs last month</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-4 card-shadow">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-mulah-gray">Annual Total</span>
+                                <i class="fas fa-chart-line text-mulah-gold"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900" data-bind="analytics.annual">€2,974.68</p>
+                            <p class="text-sm text-blue-600">8 active subscriptions</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Spending Chart -->
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Spending Trend</h3>
+                        <!-- Simple chart visualization using bars -->
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xs text-mulah-gray w-8">Dec</span>
+                                <div class="flex-1 bg-gray-100 rounded-full h-3">
+                                    <div class="bg-mulah-teal rounded-full h-3 w-4/5"></div>
+                                </div>
+                                <span class="text-xs font-medium">€270</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xs text-mulah-gray w-8">Jan</span>
+                                <div class="flex-1 bg-gray-100 rounded-full h-3">
+                                    <div class="bg-mulah-gold rounded-full h-3 w-3/4"></div>
+                                </div>
+                                <span class="text-xs font-medium">€248</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xs text-mulah-gray w-8">Nov</span>
+                                <div class="flex-1 bg-gray-100 rounded-full h-3">
+                                    <div class="bg-mulah-light-teal rounded-full h-3 w-5/6"></div>
+                                </div>
+                                <span class="text-xs font-medium">€290</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Category Breakdown -->
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">By Category</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                                    <span class="text-sm text-gray-700">Entertainment</span>
+                                </div>
+                                <span class="text-sm font-semibold">€89.97</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                                    <span class="text-sm text-gray-700">Productivity</span>
+                                </div>
+                                <span class="text-sm font-semibold">€75.98</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                                    <span class="text-sm text-gray-700">Music</span>
+                                </div>
+                                <span class="text-sm font-semibold">€39.96</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-4 h-4 bg-purple-500 rounded-full"></div>
+                                    <span class="text-sm text-gray-700">Storage</span>
+                                </div>
+                                <span class="text-sm font-semibold">€29.97</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Insights -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-lightbulb text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 mb-1">Smart Insight</h4>
+                                <p class="text-sm text-gray-700">You could save €156/year by switching to annual billing for 3 of your subscriptions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AnalyticsScreen -->
+        
+        <!-- @COMPONENT: WaitlistScreen -->
+        <div id="waitlist-screen" class="absolute inset-0 bg-gradient-to-br from-mulah-teal to-mulah-light-teal z-40 hidden">
+            <div class="flex flex-col h-full justify-center items-center px-6 text-white">
+                <button onclick="showDashboard()" class="absolute top-12 left-6 text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+                
+                <!-- Unified payments and financial management dashboard on mobile -->
+                <div class="w-full max-w-sm mb-8">
+                    <div class="bg-white/10 rounded-3xl p-6 glass-effect">
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-mulah-gold rounded-full flex items-center justify-center">
+                                    <i class="fas fa-magic text-mulah-teal text-sm"></i>
+                                </div>
+                                <div class="flex-1 h-4 bg-white/20 rounded"></div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="h-8 bg-white/30 rounded-lg"></div>
+                                <div class="h-8 bg-white/30 rounded-lg"></div>
+                                <div class="h-8 bg-white/30 rounded-lg"></div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <div class="flex-1 h-10 bg-mulah-gold/50 rounded-lg"></div>
+                                <div class="w-10 h-10 bg-white/20 rounded-lg"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold mb-4">Unified Subscription Wallet</h2>
+                    <p class="text-white/90 text-lg mb-4">One payment. One day. Total control.</p>
+                    <p class="text-white/80 text-sm">Join 2,847 people waiting for the revolutionary way to manage subscriptions.</p>
+                </div>
+                
+                <!-- Waitlist Form -->
+                <div class="w-full space-y-4">
+                    <input type="email" placeholder="Enter your email address" class="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-white/70 focus:bg-white/20 focus:border-white/40">
+                    
+                    <button class="w-full bg-mulah-gold text-mulah-teal py-4 rounded-2xl font-semibold text-lg transition-transform active:scale-95">
+                        Join Waitlist
+                    </button>
+                    
+                    <div class="text-center">
+                        <p class="text-white/70 text-sm">Early access members get 50% off for life</p>
+                    </div>
+                </div>
+                
+                <!-- Features Preview -->
+                <div class="mt-8 space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-5 h-5 bg-mulah-gold rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-check text-mulah-teal text-xs"></i>
+                        </div>
+                        <span class="text-white/90 text-sm">Consolidate all subscription payments</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-5 h-5 bg-mulah-gold rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-check text-mulah-teal text-xs"></i>
+                        </div>
+                        <span class="text-white/90 text-sm">Smart budgeting with predictable payments</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-5 h-5 bg-mulah-gold rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-check text-mulah-teal text-xs"></i>
+                        </div>
+                        <span class="text-white/90 text-sm">Never miss a payment or get surprised again</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: WaitlistScreen -->
+        
+        <!-- @COMPONENT: BottomNavigation -->
+        <div id="bottom-nav" class="fixed bottom-0 left-0 right-0 max-w-sm mx-auto bg-white border-t border-gray-100 px-6 py-2 hidden">
+            <div class="flex items-center justify-around">
+                <button onclick="showDashboard()" class="flex flex-col items-center p-3 text-mulah-teal">
+                    <i class="fas fa-home text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Home</span>
+                </button>
+                
+                <button onclick="showAnalytics()" class="flex flex-col items-center p-3 text-mulah-gray">
+                    <i class="fas fa-chart-bar text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Analytics</span>
+                </button>
+                
+                <button onclick="showAddSubscription()" class="flex flex-col items-center p-2">
+                    <div class="w-12 h-12 bg-mulah-teal rounded-full flex items-center justify-center mb-1">
+                        <i class="fas fa-plus text-white text-lg"></i>
+                    </div>
+                </button>
+                
+                <button class="flex flex-col items-center p-3 text-mulah-gray">
+                    <i class="fas fa-calendar text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Schedule</span>
+                </button>
+                
+                <button class="flex flex-col items-center p-3 text-mulah-gray">
+                    <i class="fas fa-user text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Profile</span>
+                </button>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: BottomNavigation -->
+    </div>
+
+    <script>
+        // @STATE: currentScreen:string = 'onboarding'
+        // @STATE: userSubscriptions:array = []
+        // @STATE: isAuthenticated:boolean = false
+        
+        (function() {
+            // Screen management
+            function showScreen(screenId) {
+                // Hide all screens
+                const screens = ['onboarding-screen', 'login-screen', 'dashboard-screen', 'add-subscription-screen', 'analytics-screen', 'waitlist-screen'];
+                screens.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) element.classList.add('hidden');
+                });
+                
+                // Show target screen
+                const targetScreen = document.getElementById(screenId);
+                if (targetScreen) {
+                    targetScreen.classList.remove('hidden');
+                }
+                
+                // Show/hide bottom navigation
+                const bottomNav = document.getElementById('bottom-nav');
+                if (bottomNav) {
+                    if (screenId === 'dashboard-screen' || screenId === 'analytics-screen') {
+                        bottomNav.classList.remove('hidden');
+                    } else {
+                        bottomNav.classList.add('hidden');
+                    }
+                }
+            }
+            
+            // Global functions for navigation
+            window.showOnboarding = () => showScreen('onboarding-screen');
+            window.showLogin = () => showScreen('login-screen');
+            window.showDashboard = () => showScreen('dashboard-screen');
+            window.showAddSubscription = () => showScreen('add-subscription-screen');
+            window.showAnalytics = () => showScreen('analytics-screen');
+            window.showWaitlist = () => showScreen('waitlist-screen');
+            
+            // Placeholder functions for interactions
+            window.showNotifications = () => {
+                // TODO: Implement notifications modal
+                console.log('Show notifications');
+            };
+            
+            window.showUpcoming = () => {
+                // TODO: Implement upcoming subscriptions view
+                console.log('Show upcoming subscriptions');
+            };
+            
+            // @FUNCTIONALITY: Add haptic feedback for button presses on mobile devices
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('button') && 'vibrate' in navigator) {
+                    navigator.vibrate(50);
+                }
+            });
+            
+            // @FUNCTIONALITY: Add pull-to-refresh functionality for subscription list
+            let startY = 0;
+            let currentY = 0;
+            let pullDistance = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (document.getElementById('dashboard-screen').classList.contains('hidden')) return;
+                
+                currentY = e.touches[0].clientY;
+                pullDistance = currentY - startY;
+                
+                // Simple pull-to-refresh indicator
+                if (pullDistance > 100) {
+                    // TODO: Show refresh indicator
+                }
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                if (pullDistance > 100) {
+                    // TODO: Trigger refresh of subscription data
+                    console.log('Refresh subscriptions');
+                }
+                pullDistance = 0;
+            });
+            
+            // Initialize app
+            showScreen('onboarding-screen');
+        })();
+    </script>
+</body>
+</html>

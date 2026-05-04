@@ -1,0 +1,199 @@
+1. Solidify core models (USW + Subscriptions + Transactions)
+
+Please review and, if needed, adjust the data model so we clearly have at least:
+
+User
+
+Account (bank/card/wallet; linked to User)
+
+Transaction with at minimum:
+
+userId, accountId
+
+date
+
+amount
+
+direction (in/out)
+
+rawDescription / merchantName
+
+categoryId (nullable)
+
+isRecurring (bool)
+
+subscriptionId (nullable)
+
+Category (Groceries, Rent, Bills, Transport, Subscriptions, etc.)
+
+Subscription with at minimum:
+
+userId
+
+name
+
+linkedAccountId (optional)
+
+billingFrequency (monthly, yearly, weekly, etc.)
+
+averageBillingAmount
+
+nextBillingDate
+
+status (active/paused/cancelled)
+
+Make sure USW logic is built on top of this shared model, not in an isolated way.
+
+2. Subscription detection & linkage
+
+We already have subscription tracking, but I want a clear subscription detection and linkage flow:
+
+Implement or confirm a simple recurring detection process that:
+
+Groups transactions with:
+
+same merchant or similar description
+
+similar amounts
+
+roughly consistent intervals (e.g. 28–32 days etc.)
+
+For each detected recurring group, either:
+
+Link it to an existing Subscription, or
+
+Offer / create a new Subscription record.
+
+Expose an endpoint such as:
+
+POST /api/subscriptions/detect – runs detection for a user and returns a list of suggested subscriptions with confidence scores.
+
+3. Spending categorisation & PF dashboards (turn Phase 1 list into Mulah-shaped tasks)
+
+Take the original “Phase 1” items and reframe them around Mulah:
+
+Categorisation engine
+
+Assign categoryId to each transaction (simple rule-based logic is fine for now).
+
+Ensure that subscriptions are either:
+
+a specific Category (“Subscriptions”), and/or
+
+identifiable via subscriptionId.
+
+Money In / Out page
+
+Backend endpoint: GET /api/analytics/cashflow?from=&to=&accountId=
+
+Returns:
+
+total income
+
+total expenses
+
+expenses by category
+
+Frontend: page showing:
+
+income vs expenses
+
+key breakdown of outbound spending, with Subscriptions clearly visible.
+
+Category breakdown page
+
+Backend: GET /api/analytics/categories?from=&to=&accountId=
+
+Returns totals per category, % share, and transaction counts.
+
+Frontend: category list; clicking a category shows its transactions.
+
+Subscriptions & Bills calendar
+
+Use the Subscription model + any future bill-reminder model to build:
+
+a Subscriptions list page
+
+a calendar / timeline of upcoming subscription renewals and bills.
+
+4. CFA v0 – Insights service
+
+Introduce a basic Complex Finance Analyzer service:
+
+Create a service/module, e.g. cfaService, that:
+
+Takes a user (and optional time range).
+
+Reads all relevant transactions (across accounts).
+
+Returns a small object of high-impact insights, for example:
+
+average monthly surplus/deficit over last 6 months
+
+top 3 categories by spend
+
+top 3 subscriptions by cost
+
+one or two risk signals (e.g. “x% of your income is locked in fixed subscriptions”)
+
+Expose an endpoint such as:
+
+GET /api/cfa/summary?from=&to=
+
+Frontend:
+
+Add a “Insights” section which calls this endpoint and displays the insights in a simple card layout.
+
+Design the CFA service so it’s easy to extend later with more complex analysis.
+
+5. USW business logic & tests
+
+The USW fee / eligibility logic is important for the business model, so:
+
+Move any magic numbers (base fee, per-sub fee, % overage, thresholds, min subs, min amount) into a config file or settings table.
+
+Write tests to cover at least:
+
+user with insufficient subs / amount → ineligible
+
+user exactly on the thresholds
+
+user above €60 → overage calculation correct
+
+premium user → no fee charged
+
+Ensure POST /api/usw/run uses the shared config and writes any relevant audit logs / history we might need later.
+
+6. Mesh & Buffer modules
+
+We already have Mesh and Buffer as modules. For now:
+
+Leave them as lightweight / minimal:
+
+Clearly define their intended future responsibilities in comments or docs.
+
+Ensure they don’t overcomplicate current flows.
+
+Focus current dev effort on:
+
+solid models + subscription detection
+
+PF dashboards
+
+CFA v0
+
+USW robustness + tests
+
+7. Documentation
+
+Please create or update a top-level MULAH_OVERVIEW.md that briefly explains:
+
+Current stack & architecture (modules: USW, Mesh, Buffer, etc.)
+
+Data model (User, Account, Transaction, Subscription, Category)
+
+Key endpoints and what they do
+
+Where CFA lives and how it plugs into the app
+
+Next recommended steps
