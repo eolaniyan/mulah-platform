@@ -1,54 +1,98 @@
 import { apiGet } from "./client";
 
+// ─── /api/cfa/summary ─────────────────────────────────────────────────────────
+// What the API actually returns — used by CFA Insights screen + health score
+
+export interface CFAInsight {
+  type: string;
+  severity: "info" | "warning" | "success" | "error";
+  title: string;
+  description: string;
+  action?: string;
+  details?: {
+    headline: string;
+    whyItMatters: string;
+    services?: Array<{ name: string; monthlyCost: number }>;
+    eligibleSubscriptions?: Array<{
+      name: string;
+      currentMonthly: number;
+      annualEquivalent: number;
+      yearlySavings: number;
+    }>;
+    comparison?: { yours: number; recommended: number; difference: number };
+    potentialSavings?: { monthly?: number; yearly: number; tangible: string };
+    recommendation: string;
+    steps?: string[];
+  };
+}
+
+export interface CFAPattern {
+  name: string;
+  description: string;
+  trend: "up" | "down" | "stable";
+}
+
+export interface CFAResilience {
+  emergencyFundMonths: number;
+  incomeStability: number;
+  expenseFlexibility: number;
+}
+
+/** Shape returned by GET /api/cfa/summary */
 export interface CFASummary {
-  period: { from: string; to: string; months: number };
-  cashflow: {
-    totalIncome: number;
-    totalExpenses: number;
-    averageMonthlyIncome: number;
-    averageMonthlyExpenses: number;
-    averageMonthlySurplus: number;
-    surplusDeficitStatus: "surplus" | "deficit" | "balanced";
-  };
-  topCategories: Array<{
-    category: string;
-    categorySlug: string;
-    total: number;
-    percentage: number;
-    transactionCount: number;
-  }>;
-  topSubscriptions: Array<{
+  healthScore: number;
+  riskLevel: "low" | "moderate" | "high" | "critical";
+  riskScore?: number;
+  savingsRate: number;
+  subscriptionBurden: number;
+  monthlyNetIncome: number;
+  insights: CFAInsight[];
+  patterns: CFAPattern[];
+  resilience: CFAResilience;
+}
+
+// ─── /api/analytics (Home screen summary) ─────────────────────────────────────
+export interface AnalyticsSummary {
+  monthlyTotal: number;
+  annualTotal: number;
+  categoryBreakdown: Array<{ category: string; total: number; count: number }>;
+  upcomingRenewals: Array<{
+    id: number;
     name: string;
-    monthlyCost: number;
-    annualCost: number;
+    cost: string;
+    billingCycle: string;
+    nextBillingDate: string;
+    category: string;
+    iconColor?: string | null;
+    isActive: boolean;
+    status: string;
+  }>;
+}
+
+// ─── /api/analytics/cashflow ──────────────────────────────────────────────────
+/** Shape returned by GET /api/analytics/cashflow — single object, not array */
+export interface CashflowSummary {
+  totalIncome: number;
+  totalExpenses: number;
+  netCashflow: number;
+  subscriptionExpenses: number;
+  expensesByCategory: Array<{
+    category: string;
+    amount: number;
     percentage: number;
   }>;
-  riskSignals: Array<{
-    type: string;
-    severity: "low" | "medium" | "high";
-    message: string;
-    value?: number;
-  }>;
-  patterns: {
-    subscriptionCreep: boolean;
-    highFixedCosts: boolean;
-    irregularIncome: boolean;
-    seasonalSpending: boolean;
-  };
-  recommendations: string[];
+  transactionCount: number;
+  isSubscriptionBased: boolean;
 }
 
-export interface HealthScore {
-  mulahScore: number;
-  riskLevel: "Low" | "Medium" | "High";
-}
-
+// ─── /api/analytics/monthly ───────────────────────────────────────────────────
 export interface MonthlyAnalytics {
   month: string;
   total: number;
   count: number;
 }
 
+// ─── /api/analytics/categories & /api/analytics/category-totals ───────────────
 export interface CategoryBreakdown {
   category: string;
   total: number;
@@ -56,13 +100,7 @@ export interface CategoryBreakdown {
   count: number;
 }
 
-export interface CashflowData {
-  month: string;
-  income: number;
-  expenses: number;
-  surplus: number;
-}
-
+// ─── /api/analytics/spending-trends ───────────────────────────────────────────
 export interface SpendingTrend {
   period: string;
   amount: number;
@@ -70,32 +108,79 @@ export interface SpendingTrend {
   changePercent: number;
 }
 
+// ─── /api/analytics/upcoming ─────────────────────────────────────────────────
+// Returns Subscription[] from storage — use these fields:
 export interface UpcomingBill {
   id: number;
   name: string;
-  amount: string;
-  currency: string;
-  dueDate: string;
+  cost: string;
+  currency?: string;
+  billingCycle: string;
+  nextBillingDate: string;
   category: string;
-  daysUntilDue: number;
+  iconColor?: string | null;
+  isActive: boolean;
+  status: string;
 }
 
+// ─── /api/analytics/insights ─────────────────────────────────────────────────
+export interface AnalyticsInsightResponse {
+  insights: CFAInsight[];
+}
+
+// ─── API object ───────────────────────────────────────────────────────────────
+
 export const analyticsApi = {
+  /** GET /api/analytics — Home screen hub summary */
+  getSummary: () => apiGet<AnalyticsSummary>("/api/analytics"),
+
+  /** GET /api/cfa/summary — Full CFA analysis (health score, insights, resilience) */
   getCFASummary: (params?: { from?: string; to?: string }) =>
     apiGet<CFASummary>(
       `/api/cfa/summary${params?.from ? `?from=${params.from}&to=${params.to}` : ""}`
     ),
+
+  /** GET /api/analytics/cashflow — Single cashflow summary object */
+  getCashflow: () => apiGet<CashflowSummary>("/api/analytics/cashflow"),
+
+  /** GET /api/analytics/monthly — Monthly spend totals array */
   getMonthly: () => apiGet<MonthlyAnalytics[]>("/api/analytics/monthly"),
+
+  /** GET /api/analytics/annual — Annual spend totals array */
   getAnnual: () => apiGet<MonthlyAnalytics[]>("/api/analytics/annual"),
+
+  /** GET /api/analytics/categories — Category spend breakdown */
   getCategories: () => apiGet<CategoryBreakdown[]>("/api/analytics/categories"),
-  getMonthlyDue: () => apiGet<{ total: number; count: number }>("/api/analytics/monthly-due"),
-  getUpcoming: () => apiGet<UpcomingBill[]>("/api/analytics/upcoming"),
-  getInsights: () => apiGet<{ insights: unknown[] }>("/api/analytics/insights"),
-  getSpendingTrends: () => apiGet<SpendingTrend[]>("/api/analytics/spending-trends"),
-  getCategoryBreakdown: () => apiGet<CategoryBreakdown[]>("/api/analytics/category-breakdown"),
+
+  /** GET /api/analytics/monthly-due — What's due this month */
+  getMonthlyDue: () =>
+    apiGet<{ total: number; count: number }>("/api/analytics/monthly-due"),
+
+  /** GET /api/analytics/upcoming?days=N — Upcoming subscription renewals (default 7 days) */
+  getUpcoming: (days = 30) =>
+    apiGet<UpcomingBill[]>(`/api/analytics/upcoming?days=${days}`),
+
+  /** GET /api/analytics/insights — Smart insights derived from spend */
+  getInsights: () => apiGet<AnalyticsInsightResponse>("/api/analytics/insights"),
+
+  /** GET /api/analytics/spending-trends — Spending trends over time */
+  getSpendingTrends: () =>
+    apiGet<SpendingTrend[]>("/api/analytics/spending-trends"),
+
+  /** GET /api/analytics/category-breakdown */
+  getCategoryBreakdown: () =>
+    apiGet<CategoryBreakdown[]>("/api/analytics/category-breakdown"),
+
+  /** GET /api/analytics/predictions */
   getPredictions: () => apiGet<unknown>("/api/analytics/predictions"),
-  getCashflow: () => apiGet<CashflowData[]>("/api/analytics/cashflow"),
-  getCategoryTotals: () => apiGet<CategoryBreakdown[]>("/api/analytics/category-totals"),
+
+  /** GET /api/analytics/category-totals */
+  getCategoryTotals: () =>
+    apiGet<CategoryBreakdown[]>("/api/analytics/category-totals"),
+
+  /** GET /api/billing/monthly-summary */
   getBillingSummary: () => apiGet<unknown>("/api/billing/monthly-summary"),
+
+  /** GET /api/insights — Subscription-level insights */
   getMonthlySummary: () => apiGet<unknown>("/api/insights"),
 };
