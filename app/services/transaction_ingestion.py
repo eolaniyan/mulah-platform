@@ -37,6 +37,10 @@ def _categorize_transaction(merchant: str, amount: float) -> str:
         return "Bills"
     if merchant_lower in {"salary", "freelance client"} or amount > 0:
         return "Income"
+    if merchant_lower in {"chatgpt", "adobe", "amazon prime"}:
+        return "Subscriptions"
+    if merchant_lower in {"savings transfer"}:
+        return "Savings"
     return "General"
 
 

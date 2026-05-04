@@ -1,0 +1,16 @@
+﻿{
+  "name": "mulah-signal",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "echo \"Add root lint orchestration later\"",
+    "typecheck": "echo \"Add root typecheck orchestration later\"",
+    "test": "echo \"Add test orchestration later\"",
+    "format": "echo \"Add formatting later\""
+  }
+}

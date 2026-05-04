@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mulah Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <div>
+                <h1>Mulah</h1>
+                <p>AI-powered financial command center</p>
+            </div>
+            <div class="hero-actions">
+                <button id="refreshBtn">Refresh</button>
+                <button id="resetBtn" class="secondary">Reset</button>
+            </div>
+        </header>
+
+        <section class="panel controls-panel">
+            <div class="panel-header">
+                <h2>Visual Testing</h2>
+            </div>
+
+            <div class="controls-grid">
+                <div class="control-box">
+                    <h3>Upload CSV</h3>
+                    <input type="file" id="csvFile" accept=".csv" />
+                    <button id="uploadBtn">Upload & Run</button>
+                </div>
+
+                <div class="control-box">
+                    <h3>Scenario Loader</h3>
+                    <div class="scenario-buttons">
+                        <button class="scenarioBtn" data-scenario="healthy_finances">Healthy</button>
+                        <button class="scenarioBtn" data-scenario="subscription_overload">Subscription Overload</button>
+                        <button class="scenarioBtn" data-scenario="financial_pressure">Financial Pressure</button>
+                        <button class="scenarioBtn" data-scenario="lifestyle_leak">Lifestyle Leak</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cards">
+            <div class="card">
+                <h3>Income Total</h3>
+                <p id="incomeTotal">--</p>
+            </div>
+            <div class="card">
+                <h3>Expense Total</h3>
+                <p id="expenseTotal">--</p>
+            </div>
+            <div class="card">
+                <h3>Net Cashflow</h3>
+                <p id="netCashflow">--</p>
+            </div>
+            <div class="card">
+                <h3>Savings Rate</h3>
+                <p id="savingsRate">--</p>
+            </div>
+            <div class="card accent">
+                <h3>Mulah Score</h3>
+                <p id="mulahScore">--</p>
+            </div>
+            <div class="card accent">
+                <h3>Risk Level</h3>
+                <p id="riskLevel">--</p>
+            </div>
+        </section>
+
+        <section class="cards">
+            <div class="card">
+                <h3>USW Monthly Subscriptions</h3>
+                <p id="uswSubscriptionsTotal">--</p>
+            </div>
+            <div class="card">
+                <h3>USW Monthly Bills</h3>
+                <p id="uswBillsTotal">--</p>
+            </div>
+            <div class="card">
+                <h3>USW Usage-Based Recurring</h3>
+                <p id="uswUsageTotal">--</p>
+            </div>
+            <div class="card accent">
+                <h3>USW Annual Recurring</h3>
+                <p id="uswAnnualTotal">--</p>
+            </div>
+        </section>
+
+        <section class="grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Detected Subscriptions</h2>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Merchant</th>
+                                <th>Avg Amount</th>
+                                <th>Cycle</th>
+                                <th>Next Billing</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriptionsTable">
+                            <tr><td colspan="5">No data yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Category Breakdown</h2>
+                </div>
+                <div id="categoryBreakdown" class="bar-list">
+                    <div class="empty">No data yet</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid three-col">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>CFA Diagnosis</h2>
+                </div>
+                <div id="diagnosisCards" class="stack-list"><div class="empty">No data yet</div></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Warnings</h2>
+                </div>
+                <div id="warningsList" class="stack-list"><div class="empty">No data yet</div></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Recommendations</h2>
+                </div>
+                <div id="recommendationsList" class="stack-list"><div class="empty">No data yet</div></div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Forecast — Next 30 Days</h2>
+                </div>
+                <div class="cards mini-cards">
+                    <div class="mini-card">
+                        <span>Projected Outflow</span>
+                        <strong id="forecastTotal">--</strong>
+                    </div>
+                    <div class="mini-card">
+                        <span>Subscriptions</span>
+                        <strong id="forecastSubscriptions">--</strong>
+                    </div>
+                    <div class="mini-card">
+                        <span>Bills</span>
+                        <strong id="forecastBills">--</strong>
+                    </div>
+                    <div class="mini-card">
+                        <span>Usage-Based</span>
+                        <strong id="forecastUsage">--</strong>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Merchant</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="forecastTable">
+                            <tr><td colspan="4">No forecast data yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>What Changed?</h2>
+                </div>
+                <div id="changeMeta" class="subtle"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Latest</th>
+                                <th>Previous</th>
+                                <th>% Change</th>
+                            </tr>
+                        </thead>
+                        <tbody id="changesTable">
+                            <tr><td colspan="4">No change data yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="panel-header top-space">
+                    <h2>Anomaly Flags</h2>
+                </div>
+                <div id="anomalyFlags" class="stack-list"><div class="empty">No anomalies yet</div></div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Recurring Analysis</h2>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Merchant</th>
+                            <th>Type</th>
+                            <th>Avg Amount</th>
+                            <th>Avg Interval</th>
+                            <th>Recurring Confidence</th>
+                            <th>Classification Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysisTable">
+                        <tr><td colspan="6">No data yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

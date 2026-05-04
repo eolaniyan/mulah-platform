@@ -1,0 +1,18 @@
+[1G[0K⠙[1G[0K
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K⠙[1G[0KIRIS Brain monitoring started
+IRIS Monitoring Service started
+Seeding app configuration...
+App configuration seeded.
+Seeding categories...
+Categories seeded.
+Seeding service directory...
+Service directory seeded.
+Seeding service plans...
+Service plans seeded.
+All seeds completed successfully!
+11:03:29 AM [express] Database seeds completed
+11:03:30 AM [express] serving on port 5000
+IRIS: API credits exhausted - disabling AI features for 1 hour

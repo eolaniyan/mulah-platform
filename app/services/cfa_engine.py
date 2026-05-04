@@ -18,6 +18,8 @@ def generate_cfa_summary(db: Session) -> dict:
             "category_breakdown": {},
             "top_spending_category": None,
             "recurring_burden": 0.0,
+            "monthly_income_estimate": 0.0,
+            "monthly_expense_estimate": 0.0,
         }
 
     income_total = round(sum(tx.amount for tx in transactions if tx.amount > 0), 2)
@@ -31,6 +33,9 @@ def generate_cfa_summary(db: Session) -> dict:
     category_breakdown_map = defaultdict(float)
     recurring_burden = 0.0
 
+    months = {(tx.date.year, tx.date.month) for tx in transactions}
+    month_count = max(len(months), 1)
+
     for tx in transactions:
         if tx.amount < 0:
             category_breakdown_map[tx.category or "Uncategorized"] += abs(tx.amount)
@@ -38,10 +43,14 @@ def generate_cfa_summary(db: Session) -> dict:
             recurring_burden += abs(tx.amount)
 
     category_breakdown = {
-        k: round(v, 2) for k, v in sorted(category_breakdown_map.items(), key=lambda x: x[1], reverse=True)
+        k: round(v, 2)
+        for k, v in sorted(category_breakdown_map.items(), key=lambda x: x[1], reverse=True)
     }
 
     top_spending_category = next(iter(category_breakdown), None)
+
+    monthly_income_estimate = round(income_total / month_count, 2)
+    monthly_expense_estimate = round(expense_total / month_count, 2)
 
     return {
         "income_total": income_total,
@@ -51,4 +60,6 @@ def generate_cfa_summary(db: Session) -> dict:
         "category_breakdown": category_breakdown,
         "top_spending_category": top_spending_category,
         "recurring_burden": round(recurring_burden, 2),
+        "monthly_income_estimate": monthly_income_estimate,
+        "monthly_expense_estimate": monthly_expense_estimate,
     }
