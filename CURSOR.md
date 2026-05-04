@@ -252,3 +252,14 @@ recurring_confidence = (amount_consistency + interval_consistency) / 2
 threshold for "is recurring" = 0.5
 threshold for "high confidence" = 0.85
 ```
+
+---
+
+## Repo orientation (quick reference)
+
+- **Default branch**: `master` — clone/pull `https://github.com/eolaniyan/mulah-platform.git`.
+- **pnpm from root**: `pnpm dev:finance-web`, `pnpm dev:finance-mobile`, `pnpm dev:signals`, `pnpm dev:subscription-web`, `pnpm dev:invoice-web` (last two placeholders until wired).
+- **ADRs**: `docs/decisions/ADR-0001-monorepo-migration.md`, `docs/decisions/ADR-0002-product-boundaries.md`.
+- **Legacy**: `archive/legacy/` is snapshot-only; archived `.replit` uses redacted placeholders — never commit real API keys.
+- **Optional Windows reminders**: `scripts/git-nudge.ps1`, `scripts/setup-git-nudge-task.ps1`.
+- **Replit ↔ Cursor sync**: `docs/REPLIT_CURSOR_SYNC.md`.
