@@ -1,31 +1,39 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client";
 
 // ─── Virtual Cards ────────────────────────────────────────────────────────────
+// Field names match the database schema exactly (shared/schema.ts virtualCards table)
 
 export interface VirtualCard {
   id: number;
   userId: string;
+  stripeCardId: string;
   last4: string;
-  expiryMonth: number;
-  expiryYear: number;
-  status: string;
-  spendLimit?: string | null;
-  currency: string;
-  linkedSubscriptionId?: number | null;
+  brand: string;
+  status: "active" | "frozen" | "cancelled";
+  spendingLimit?: string | null;
+  merchantRestrictions?: string[];
+  assignedToSubscription?: string | null;
   createdAt?: string;
 }
 
 export interface CreateVirtualCardInput {
-  spendLimit?: string;
-  currency?: string;
-  linkedSubscriptionId?: number;
+  spendingLimit?: string;
+  assignedToSubscription?: string;
+  merchantRestrictions?: string[];
+}
+
+export interface UpdateVirtualCardInput {
+  status?: "active" | "frozen" | "cancelled";
+  spendingLimit?: string | null;
+  assignedToSubscription?: string | null;
+  merchantRestrictions?: string[];
 }
 
 export const virtualCardsApi = {
   getAll: () => apiGet<VirtualCard[]>("/api/virtual-cards"),
   create: (data: CreateVirtualCardInput) =>
     apiPost<VirtualCard>("/api/virtual-cards", data),
-  update: (id: number, data: Partial<VirtualCard>) =>
+  update: (id: number, data: UpdateVirtualCardInput) =>
     apiPatch<VirtualCard>(`/api/virtual-cards/${id}`, data),
   delete: (id: number) =>
     apiDelete<{ message: string }>(`/api/virtual-cards/${id}`),
@@ -46,14 +54,18 @@ export interface BankConnection {
 
 export interface BankTransaction {
   id: number;
+  userId: string;
   bankConnectionId: number;
+  transactionId: string;
   transactionDate: string;
   amount: string;
+  currency: string;
   description: string;
   merchantName?: string | null;
   category?: string | null;
+  confidence?: string | null;
   direction: "in" | "out";
-  isRecurring?: boolean;
+  isSubscriptionPayment?: boolean;
   createdAt?: string;
 }
 
@@ -202,33 +214,41 @@ export const categoriesApi = {
     ),
 };
 
-// ─── Support ──────────────────────────────────────────────────────────────────
+// ─── Support / Concierge ──────────────────────────────────────────────────────
 
 export interface SupportCase {
   id: number;
   userId: string;
   subject: string;
-  status: string;
-  priority: string;
+  description?: string;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  priority: "low" | "normal" | "high" | "urgent";
   createdAt: string;
 }
 
 export const supportApi = {
-  createCase: (data: { subject: string; description: string; priority?: string }) =>
-    apiPost<SupportCase>("/api/support/cases", data),
+  createCase: (data: {
+    subject: string;
+    description: string;
+    priority?: "low" | "normal" | "high" | "urgent";
+  }) => apiPost<SupportCase>("/api/support/cases", data),
   getCases: () => apiGet<SupportCase[]>("/api/support/cases"),
 };
 
 // ─── Waitlist ─────────────────────────────────────────────────────────────────
 
 export const waitlistApi = {
-  join: (email: string) => apiPost<{ success: boolean }>("/api/waitlist", { email }),
+  join: (email: string) =>
+    apiPost<{ success: boolean }>("/api/waitlist", { email }),
   getCount: () => apiGet<{ count: number }>("/api/waitlist/count"),
 };
 
 // ─── Demo ─────────────────────────────────────────────────────────────────────
 
 export const demoApi = {
-  populate: () => apiPost<{ message: string }>("/api/demo/populate"),
+  populate: () =>
+    apiPost<{ message: string; subscriptionsCreated: number; transactionsCreated: number }>(
+      "/api/demo/populate"
+    ),
   clear: () => apiDelete<{ message: string }>("/api/demo/clear"),
 };
