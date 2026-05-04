@@ -1,6 +1,9 @@
 # Mulah — Cursor Coordination Guide
 
-This document is the single source of truth for what Cursor should build in the `mulah-platform` monorepo. It is kept in sync with work happening in Replit (which covers `apps/finance-web` and rapid API iteration).
+This document is the **single source of truth** for what Cursor should build in the `mulah-platform` monorepo.
+It is kept in sync with work happening in Replit (which owns `apps/finance-web` and `services/api` rapid iteration).
+
+**Last synced:** May 2026
 
 ---
 
@@ -15,6 +18,22 @@ This document is the single source of truth for what Cursor should build in the 
 
 ---
 
+## Division of labour: Cursor vs Replit
+
+| Work area | Who builds it |
+|-----------|--------------|
+| `apps/finance-web` pages + components | **Replit** |
+| `apps/finance-mobile` screens | **Cursor** |
+| `apps/subscription-web` (new app) | **Cursor** |
+| `apps/signals` screens | **Cursor** |
+| `packages/shared-logic` | Created by Replit, maintained by **both** |
+| `packages/types` schema changes | **Cursor** |
+| `services/api` new routes | **Replit** (fast iteration) |
+| `services/api` service logic | **Cursor** (TypeScript precision) |
+| Monorepo plumbing (workspace, CI, EAS, Vercel config) | **Cursor** |
+
+---
+
 ## Product boundaries (ADR-0002 — DO NOT mix these)
 
 | App | Owns | Status |
@@ -25,75 +44,36 @@ This document is the single source of truth for what Cursor should build in the 
 | `apps/signals` | Investing companion — portfolio, market data, opportunity cards | Bootstrapped (Next.js 16) |
 | `services/api` | Shared Express.js backend serving all apps | Active |
 | `packages/types` | Shared Drizzle schema + TypeScript types | Active |
-| `packages/shared-logic` | Shared API client + React Query hooks + utilities | **NEW — just created in Replit, copy here** |
+| `packages/shared-logic` | Shared API client + React Query hooks + utilities | **Active — use this for all data fetching** |
 
 ---
 
-## Sprint 1 — Foundation (your priority right now)
+## Mobile App Setup (`apps/finance-mobile`)
 
-### Task 1.1 — Add `packages/shared-logic` to the monorepo
+### Step 1 — Wire shared-logic at app startup
 
-Replit has created the `packages/shared-logic` package. Copy it into the monorepo exactly as-is and wire it into the workspace.
+In `App.tsx` (before rendering any navigation):
 
-**Files to copy from Replit's `packages/shared-logic/`:**
-```
-packages/shared-logic/
-  package.json          (@mulah/shared-logic)
-  tsconfig.json
-  src/
-    index.ts
-    constants/index.ts
-    api/
-      client.ts         ← platform-agnostic fetch wrapper
-      auth.ts
-      subscriptions.ts
-      analytics.ts
-      iris.ts
-      finance.ts        ← virtual cards, bank, USW, buffer, mesh, payments, support
-    hooks/
-      useAuth.ts
-      useSubscriptions.ts
-      useCFA.ts
-      useIRIS.ts
-      useFinance.ts
-    utils/
-      formatters.ts
-      cfa.ts            ← calculateHealthScore() mirrors Python health_score_engine.py exactly
-      subscriptions.ts
+```ts
+import { setApiBaseUrl, setTokenProvider } from "@mulah/shared-logic";
+import * as SecureStore from "expo-secure-store";
+
+setApiBaseUrl(process.env.EXPO_PUBLIC_API_URL ?? "https://mulah-api.replit.app");
+setTokenProvider(() => SecureStore.getItemAsync("auth_token"));
 ```
 
-Then update the root `pnpm-workspace.yaml` to include `packages/*` if not already there.
+### Step 2 — Screen → Hook mapping (use ONLY these hooks, do not write raw fetch calls)
 
----
-
-### Task 1.2 — Wire `apps/finance-mobile` to use `@mulah/shared-logic`
-
-**Goal:** Remove all duplicated API calls and data hooks from the mobile app. Replace with shared-logic imports.
-
-Steps:
-1. Add `@mulah/shared-logic` to `apps/finance-mobile/package.json` dependencies
-2. At app startup in `App.tsx`, call:
-   ```ts
-   import { setApiBaseUrl, setTokenProvider } from "@mulah/shared-logic";
-   import * as SecureStore from "expo-secure-store";
-   setApiBaseUrl(process.env.EXPO_PUBLIC_API_URL ?? "https://your-api.replit.app");
-   setTokenProvider(() => SecureStore.getItemAsync("auth_token"));
-   ```
-3. Replace all `src/lib/api.ts` usages in each screen with the appropriate hook from `@mulah/shared-logic`
-4. Delete `apps/finance-mobile/src/lib/api.ts` once all usages are replaced
-
-**Screen → Hook mapping:**
-
-| Screen | Replace with hook |
-|--------|------------------|
-| HomeScreen | `useAuth`, `useSubscriptions`, `useHealthScore` |
-| SubscriptionDashboard | `useSubscriptions`, `useCFA` |
+| Screen | Hook(s) to use |
+|--------|----------------|
+| HomeScreen | `useAnalyticsSummary`, `useSubscriptions`, `useHealthScore` |
+| SubscriptionDashboard | `useSubscriptions`, `useAnalyticsSummary` |
 | AddSubscriptionScreen | `useCreateSubscription`, `useCategories` |
 | USWScreen | `useUSWCalculation`, `useRunUSW`, `useUSWTransactions` |
 | VirtualCardsScreen | `useVirtualCards`, `useCreateVirtualCard`, `useDeleteVirtualCard` |
 | FamilyScreen | `useSubscriptions`, `useSubscriptionFamilyEligibility` |
 | CalendarScreen | `useUpcomingBills`, `useSubscriptions` |
-| ConciergeScreen | (support API) `supportApi.createCase` |
+| ConciergeScreen | `supportApi.createCase`, `supportApi.getCases` |
 | CashflowScreen | `useCashflow`, `useCFA` |
 | InsightsScreen | `useHealthScore`, `useAnalyticsInsights`, `useCategoryTotals` |
 | AnalyticsScreen | `useMonthlyAnalytics`, `useSpendingTrends`, `useCategoryTotals` |
@@ -102,134 +82,435 @@ Steps:
 
 ---
 
-### Task 1.3 — Wire `apps/finance-web` to use `@mulah/shared-logic`
+## Complete API Reference
 
-**Goal:** Replace the web app's direct fetch calls with shared-logic hooks where they exist.
+Base URL is set via `setApiBaseUrl()`. All endpoints require authentication (Replit Auth cookie/token) except where noted.
 
-Steps:
-1. Add `@mulah/shared-logic` to `apps/finance-web/package.json`
-2. In `apps/finance-web/src/main.tsx` or `App.tsx`, call:
-   ```ts
-   import { setApiBaseUrl } from "@mulah/shared-logic";
-   setApiBaseUrl(""); // empty = same origin (works for Replit/Vercel)
-   ```
-3. Replace individual hook files in `apps/finance-web/src/hooks/` with re-exports from `@mulah/shared-logic` where the hook already exists
-4. Keep any web-specific hooks (e.g. `useProactiveHelp`) in the web app
-
-**Priority replacements for finance-web:**
-- `useAuth` → `@mulah/shared-logic`
-- Any inline `fetch("/api/subscriptions")` calls → `useSubscriptions` from shared-logic
-- Any inline CFA fetch calls → `useCFA`, `useHealthScore` from shared-logic
+Auth header for mobile: `Authorization: Bearer <token>` (set via `setTokenProvider`).
 
 ---
 
-### Task 1.4 — Build `apps/subscription-web` MVP
+### Auth
 
-Subscription-web is currently a placeholder. Build it as a **standalone React + Vite app** targeting the shared API.
+#### `GET /api/auth/user`
+Returns the currently authenticated user.
+```ts
+// Response
+{
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+  onboardingComplete?: boolean;
+}
+```
 
-**Tech stack to use:**
-- React 18 + TypeScript + Vite (match finance-web)
-- Tailwind CSS (match finance-web)
-- `@mulah/shared-logic` for all data fetching
-- Same Replit Auth (`/api/login`, `/api/auth/user`)
-
-**Screens to build:**
-
-1. **Dashboard** — detected subscriptions list, total spend, unknown charges count
-2. **Detection results** — output of `POST /api/subscriptions/detect`, cards per detected subscription with confidence score
-3. **Renewals calendar** — monthly calendar view of upcoming subscription charges
-4. **Unknown charge resolver** — interface to classify unrecognised transaction descriptions
-5. **Subscription detail** — per-subscription: history, price trend, cancel guidance
-
-**API it will consume** (all already exist in `services/api`):
-- `GET /api/subscriptions`
-- `POST /api/subscriptions/detect`
-- `GET /api/subscriptions/management`
-- `GET /api/analytics/upcoming`
-- `GET /api/bank-transactions`
+#### `POST /api/auth/onboarding-complete`
+Mark onboarding as done.
+```ts
+// Response
+{ success: true }
+```
 
 ---
 
-### Task 1.5 — Build `apps/signals` foundation screens
+### Subscriptions
 
-Signals is bootstrapped as a Next.js 16 app. Build these screens — all are data display only, no investment advice:
+#### `GET /api/subscriptions`
+Returns all subscriptions for the authenticated user.
+```ts
+// Response: Subscription[]
+{
+  id: number;
+  userId: string;
+  name: string;
+  cost: string;                // e.g. "13.49"
+  currency: string;            // "EUR"
+  billingCycle: string;        // "monthly" | "yearly" | "weekly"
+  nextBillingDate: string;     // ISO date string
+  category: string;            // "streaming" | "music" | "cloud" | etc.
+  status: string;              // "active" | "paused" | "cancelled"
+  isActive: boolean;
+  iconColor?: string | null;
+  iconName?: string | null;
+  description?: string | null;
+  website?: string | null;
+  createdAt?: string;
+}
+```
 
-1. **Portfolio overview** — manual entry or CSV import of holdings; total value, allocation by asset type
-2. **Performance tracking** — holdings vs benchmark (SP500, ISEQ) — display only, user-entered data
-3. **Opportunity cards** — curated market move cards (fetch from a free market API like Yahoo Finance / Alpha Vantage); each card: asset name, move %, relevant news headline, risk level badge
-4. **Risk visualization** — concentration chart (sector/geography exposure from portfolio data)
-5. **Goals** — user sets a goal (e.g. "€50k by 2027"), app tracks trajectory based on current portfolio value and target
+#### `POST /api/subscriptions`
+Create a new subscription.
+```ts
+// Body
+{
+  name: string;
+  cost: string;
+  currency?: string;           // default "EUR"
+  billingCycle: string;        // "monthly" | "yearly" | "weekly"
+  nextBillingDate: string;     // ISO date string
+  category: string;
+  status?: string;             // default "active"
+  isActive?: boolean;          // default true
+  iconColor?: string;
+  iconName?: string;
+  description?: string;
+  website?: string;
+}
+// Response: Subscription (see above)
+```
 
-**Important:** Do NOT build anything that:
-- Personalizes recommendations based on portfolio (that's regulated advice)
-- Has an "approve to execute" flow that connects to a broker (hold this for later)
+#### `PUT /api/subscriptions/:id`
+Update a subscription.
+```ts
+// Body: Partial<Subscription fields above>
+// Response: Subscription
+```
 
-**Tech:** Next.js 16 App Router, Tailwind v4, React 19. `packages/shared-logic` for any calls to the shared API. Market data: free tier of Alpha Vantage or Yahoo Finance (no API key needed for basic quotes).
+#### `DELETE /api/subscriptions/:id`
+Delete a subscription.
+```ts
+// Response: { message: "Subscription deleted" }
+```
+
+#### `GET /api/subscriptions/:id/family-eligibility`
+Check if a subscription can be shared with family.
+```ts
+// Response
+{
+  eligible: boolean;
+  reason?: string;
+  maxMembers?: number;
+}
+```
+
+#### `POST /api/subscriptions/detect`
+Run AI detection on bank transactions to find recurring subscriptions.
+```ts
+// Body (optional)
+{ transactionIds?: number[] }
+// Response
+{
+  detected: Subscription[];
+  confidence: number;
+}
+```
+
+#### `GET /api/subscriptions/management`
+Returns subscription management metadata (cancellation info, price change history).
+```ts
+// Response: Array of management objects per subscription
+```
 
 ---
 
-## Ongoing rules — never break these
+### Analytics
 
-### Schema alignment
-When changing `packages/types/src/schema.ts`, update `apps/finance-mobile` types at `src/types/index.ts` to match. Replit uses `@shared/schema` (same file, different alias). Do not let them drift.
+#### `GET /api/analytics`
+**Home screen summary.** Returns subscription totals + upcoming renewals.
+```ts
+// Response
+{
+  monthlyTotal: number;        // total monthly subscription spend (EUR)
+  annualTotal: number;         // projected annual spend
+  categoryBreakdown: Array<{
+    category: string;
+    total: number;
+    count: number;
+  }>;
+  upcomingRenewals: Subscription[];  // renewals due in next 30 days
+}
+```
+**Hook:** `useAnalyticsSummary()`
 
-### API contract alignment
-Never rename or remove an existing API route in `services/api/src/routes.ts` without updating:
-1. `packages/shared-logic/src/api/` — the relevant api file
-2. The hook in `packages/shared-logic/src/hooks/`
-3. All screens in `apps/finance-mobile` that call it
-4. All pages in `apps/finance-web` that call it
+#### `GET /api/cfa/summary`
+**CFA Insights — the core financial intelligence engine.**
+```ts
+// Optional query params: ?from=YYYY-MM-DD&to=YYYY-MM-DD
+// Response
+{
+  healthScore: number;         // 0-100
+  riskLevel: string;           // "low" | "moderate" | "high" | "critical"
+  savingsRate: number;         // percentage e.g. 11
+  subscriptionBurden: number;  // percentage of income spent on subscriptions
+  monthlyNetIncome: number;    // average monthly surplus (EUR)
+  insights: Array<{
+    type: string;
+    severity: "info" | "warning" | "success" | "error";
+    title: string;
+    description: string;
+    action?: string;           // action label for CTA button
+    details?: {
+      headline: string;
+      whyItMatters: string;
+      services?: Array<{ name: string; monthlyCost: number }>;
+      eligibleSubscriptions?: Array<{
+        name: string;
+        currentMonthly: number;
+        annualEquivalent: number;
+        yearlySavings: number;
+      }>;
+      comparison?: { yours: number; recommended: number; difference: number };
+      potentialSavings?: { monthly?: number; yearly: number; tangible: string };
+      recommendation: string;
+      steps?: string[];
+    };
+  }>;
+  patterns: Array<{
+    name: string;
+    description: string;
+    trend: "up" | "down" | "stable";
+  }>;
+  resilience: {
+    emergencyFundMonths: number;
+    incomeStability: number;   // 0-100
+    expenseFlexibility: number; // 0-100
+  };
+}
+```
+**Hook:** `useCFA()` / `useHealthScore()`
 
-### Product boundary enforcement
-Feature belongs in... | Build it in
---- | ---
-Household finance, CFA, budgets | `apps/finance-web` + `apps/finance-mobile`
-Subscription detection, unknown charges | `apps/subscription-web`
-Portfolio, market data, investing | `apps/signals`
-Data fetching hooks & API calls | `packages/shared-logic`
-DB schema, insert/select types | `packages/types`
-Backend routes, auth, services | `services/api`
+#### `GET /api/analytics/cashflow`
+**Single cashflow summary object (NOT an array).**
+```ts
+// Response
+{
+  totalIncome: number;
+  totalExpenses: number;
+  netCashflow: number;
+  subscriptionExpenses: number;
+  expensesByCategory: Array<{
+    category: string;
+    amount: number;
+    percentage: number;
+  }>;
+  transactionCount: number;
+  isSubscriptionBased: boolean;  // true if derived from subs only (no bank txns)
+}
+```
+**Hook:** `useCashflow()`
 
-### Shared-logic hygiene
-- Every new API endpoint added to `services/api` → add a corresponding function in `packages/shared-logic/src/api/`
-- Every new data-fetching pattern → add a hook in `packages/shared-logic/src/hooks/`
-- Never put UI code in `packages/shared-logic`
-- Never put business logic that belongs in `packages/shared-logic` directly inside a screen component
+#### `GET /api/analytics/upcoming?days=N`
+Returns upcoming subscription renewals (default 30 days).
+```ts
+// Response: UpcomingBill[] where each item has:
+{
+  id: number;
+  name: string;
+  cost: string;              // e.g. "13.49"
+  billingCycle: string;
+  nextBillingDate: string;   // ISO date
+  category: string;
+  iconColor?: string | null;
+  isActive: boolean;
+  status: string;
+}
+```
+**Hook:** `useUpcomingBills(days?)`
+
+#### `GET /api/analytics/monthly`
+Monthly spend totals (array, one entry per month).
+```ts
+// Response: Array<{ month: string; total: number; count: number }>
+```
+**Hook:** `useMonthlyAnalytics()`
+
+#### `GET /api/analytics/spending-trends`
+Spending trends over time.
+```ts
+// Response: Array<{ period: string; amount: number; change: number; changePercent: number }>
+```
+**Hook:** `useSpendingTrends()`
+
+#### `GET /api/analytics/category-totals`
+Spend broken down by category.
+```ts
+// Response: Array<{ category: string; total: number; percentage: number; count: number }>
+```
+**Hook:** `useCategoryTotals()`
+
+#### `GET /api/analytics/insights`
+AI-derived smart insights.
+```ts
+// Response: { insights: CFAInsight[] }
+```
+**Hook:** `useAnalyticsInsights()`
 
 ---
 
-## Division of labour: Cursor vs Replit
+### Bank Transactions
 
-| Work area | Who builds it |
-|-----------|--------------|
-| `apps/finance-web` pages + components | **Replit** |
-| `apps/finance-mobile` screens | **Cursor** |
-| `apps/subscription-web` (new app) | **Cursor** |
-| `apps/signals` screens | **Cursor** |
-| `packages/shared-logic` | Created by Replit, maintained by **both** |
-| `packages/types` schema changes | **Cursor** (precision + cross-file refactoring) |
-| `services/api` new routes | **Replit** (fast iteration) |
-| `services/api` service logic | **Cursor** (TypeScript precision) |
-| Monorepo plumbing (workspace, CI, EAS, Vercel config) | **Cursor** |
+#### `GET /api/bank-transactions`
+Returns all bank transactions for the user.
+```ts
+// Response: BankTransaction[]
+{
+  id: number;
+  userId: string;
+  bankConnectionId: number;
+  transactionId: string;
+  transactionDate: string;   // ISO date
+  amount: string;            // positive = expense, negative = income credit
+  currency: string;
+  description: string;
+  merchantName?: string | null;
+  category?: string | null;
+  confidence?: string | null;
+  direction: "in" | "out";
+  isSubscriptionPayment?: boolean;
+}
+```
+**Hook:** `useBankTransactions()`
+
+#### `GET /api/bank-connections`
+Returns linked bank accounts.
+**Hook:** `useBankConnections()`
 
 ---
 
-## Architecture decisions already made (do not re-litigate)
+### Virtual Cards
 
-- **Mulah Invoice is archived** — different customer (SMB), revisit at Series A
-- **Mulah Signals regulatory line** — no personalised recommendations, no execute flow yet; build data display and opportunity cards only
-- **Single backend** (`services/api`) serves all four apps via shared auth (Replit Auth / OpenID Connect)
-- **Shared logic** lives in `packages/shared-logic`, not duplicated per app
-- **Mobile = native** (`apps/finance-mobile` via Expo, NOT React Native Web)
-- **Web = Vite/React** for finance and subscription; **Next.js 16** for signals
-- **Currency**: EUR default throughout (Irish market focus)
-- **Categories**: "Subscriptions", "Groceries", "Transport", "Fuel", "Lifestyle", "Bills", "Income", "General"
+#### `GET /api/virtual-cards`
+```ts
+// Response: VirtualCard[]
+{
+  id: number;
+  userId: string;
+  stripeCardId: string;
+  last4: string;
+  brand: string;             // "visa"
+  status: "active" | "frozen" | "cancelled";
+  spendingLimit?: string | null;
+  merchantRestrictions?: string[];
+  assignedToSubscription?: string | null;
+}
+```
+**Hook:** `useVirtualCards()`
+
+#### `POST /api/virtual-cards`
+```ts
+// Body
+{ spendingLimit?: string; assignedToSubscription?: string; merchantRestrictions?: string[] }
+// Response: VirtualCard
+```
+**Hook:** `useCreateVirtualCard()`
+
+#### `PATCH /api/virtual-cards/:id`
+```ts
+// Body: { status?: "active" | "frozen" | "cancelled"; spendingLimit?: string; ... }
+// Response: VirtualCard
+```
+
+#### `DELETE /api/virtual-cards/:id`
+```ts
+// Response: { message: string }
+```
+**Hook:** `useDeleteVirtualCard()`
 
 ---
 
-## Financial algorithm reference (match exactly)
+### USW (Unified Subscription Wallet)
 
-### Health score (calculateHealthScore in packages/shared-logic/src/utils/cfa.ts)
+#### `GET /api/usw/calculate`
+```ts
+// Response
+{
+  totalMonthly: number;
+  totalAnnual: number;
+  potentialSavings: number;
+  subscriptionCount: number;
+  breakdown: Array<{ name: string; cost: number; dueDate: string }>;
+}
+```
+**Hook:** `useUSWCalculation()`
+
+#### `POST /api/usw/run`
+```ts
+// Body (optional): { subscriptionIds?: number[] }
+// Response: { success: boolean; message: string }
+```
+**Hook:** `useRunUSW()`
+
+#### `GET /api/usw/transactions`
+**Hook:** `useUSWTransactions()`
+
+---
+
+### IRIS AI Assistant
+
+#### `POST /api/iris/ask`
+```ts
+// Body
+{ message: string; context?: Record<string, unknown> }
+// Response
+{
+  reply: string;
+  context?: Record<string, unknown>;
+  actions?: Array<{ label: string; route: string }>;
+  confidence?: number;
+}
+```
+**Hook:** `useIRISAsk()`
+
+#### `GET /api/iris/navigation`
+```ts
+// Response
+{
+  suggestedRoutes: Array<{ label: string; route: string; reason: string }>;
+}
+```
+**Hook:** `useIRISNavigation()`
+
+#### `GET /api/iris/pages`
+**Hook:** `useIRISPages()`
+
+#### Helper: `buildIRISContext(screenName, data)`
+Builds the context object to pass to `useIRISAsk`. Import from `@mulah/shared-logic`.
+
+---
+
+### Support / Concierge
+
+#### `POST /api/support/cases`
+```ts
+// Body
+{ subject: string; description: string; priority?: "low" | "normal" | "high" | "urgent" }
+// Response: SupportCase { id, userId, subject, status, priority, createdAt }
+```
+
+#### `GET /api/support/cases`
+Returns all support cases for the user.
+
+---
+
+### Categories
+
+#### `GET /api/categories`
+Returns all subscription categories (no auth required).
+```ts
+// Response: Array<{ id: number; name: string; slug: string; icon?: string; color?: string }>
+```
+**Hook:** `useCategories()`
+
+---
+
+### Demo
+
+#### `POST /api/demo/populate`
+Loads 6 months of realistic Irish household data (salary, rent, groceries, subscriptions, transport).
+Creates: 10+ subscriptions + ~120 bank transactions across 6 months.
+```ts
+// Response: { message: string; subscriptionsCreated: number; transactionsCreated: number }
+```
+
+#### `DELETE /api/demo/clear`
+Removes all demo data for the user.
+
+---
+
+## Health Score Algorithm (match exactly)
+
 ```
 base = 50
 savings_rate >= 20%  → +25
@@ -243,23 +524,52 @@ recurring_ratio >= 20%→ -10
 net_cashflow > 0     → +10
 net_cashflow <= 0    → -10
 score = clamp(0, 100)
-Low risk: ≥ 80, Medium: ≥ 60, High: < 60
+Low risk: score ≥ 80, Medium: ≥ 60, High: < 60
 ```
 
-### Recurring confidence
-```
-recurring_confidence = (amount_consistency + interval_consistency) / 2
-threshold for "is recurring" = 0.5
-threshold for "high confidence" = 0.85
+`healthScore` is returned directly by `/api/cfa/summary` — do NOT recalculate it on the client.
+
+---
+
+## Irish Market Constants
+
+```ts
+Currency: EUR
+Salary range (demo): €3,850/month (Accenture Ireland)
+Merchants: Tesco, Lidl, Aldi, Dunnes Stores, Electric Ireland, Gas Networks Ireland,
+           Vodafone Ireland, Transport for Ireland (Luas), Circle K, Applegreen,
+           Iarnród Éireann, Bewley's Café, Costa Coffee
+Subscriptions (demo): Netflix €13.49, Spotify €9.99, Adobe CC €59.99, ChatGPT €20.00,
+                      Gym Plus €49.99, Vodafone Broadband €49.99, iCloud+ €2.99,
+                      YouTube Premium €11.99, Notion €8.00, NordVPN €3.99
+Categories: "streaming" | "music" | "cloud" | "productivity" | "developer" |
+            "design" | "security" | "health" | "fitness" | "finance" |
+            "shopping" | "telecom" | "software" | "insurance"
 ```
 
 ---
 
-## Repo orientation (quick reference)
+## Architecture decisions (do not re-litigate)
 
-- **Default branch**: `master` — clone/pull `https://github.com/eolaniyan/mulah-platform.git`.
-- **pnpm from root**: `pnpm dev:finance-web`, `pnpm dev:finance-mobile`, `pnpm dev:signals`, `pnpm dev:subscription-web`, `pnpm dev:invoice-web` (last two placeholders until wired).
-- **ADRs**: `docs/decisions/ADR-0001-monorepo-migration.md`, `docs/decisions/ADR-0002-product-boundaries.md`.
-- **Legacy**: `archive/legacy/` is snapshot-only; archived `.replit` uses redacted placeholders — never commit real API keys.
-- **Optional Windows reminders**: `scripts/git-nudge.ps1`, `scripts/setup-git-nudge-task.ps1`.
-- **Replit ↔ Cursor sync**: `docs/REPLIT_CURSOR_SYNC.md`.
+- **Mulah Invoice is archived** — revisit at Series A
+- **Mulah Signals** — no personalised recommendations, no broker execute flow yet
+- **Single backend** (`services/api`) serves all four apps via Replit Auth
+- **Shared logic** lives in `packages/shared-logic` — never duplicate API calls in screens
+- **Mobile = native** (`apps/finance-mobile` via Expo EAS, NOT React Native Web)
+- **Currency**: EUR throughout (Irish market)
+- **cashflow endpoint returns a single object** — not an array — `useCashflow()` is typed correctly
+
+## Schema alignment rules (never break)
+
+1. `packages/types/src/schema.ts` is the source of truth for all field names
+2. `VirtualCard.spendingLimit` (not `spendLimit`), `VirtualCard.assignedToSubscription` (not `linkedSubscriptionId`)
+3. `BankTransaction.direction` = `"in" | "out"` (not `"credit" | "debit"`)
+4. `Subscription.cost` is always a string (not number) — parse with `parseFloat()`
+5. `Subscription.nextBillingDate` is an ISO date string
+
+## Ongoing rules — never break
+
+- Never rename or remove an existing API route without updating `packages/shared-logic/src/api/` + all consuming screens
+- Every new API endpoint → add function to `packages/shared-logic/src/api/` → add hook to `packages/shared-logic/src/hooks/`
+- Never put UI code in `packages/shared-logic`
+- Never write raw `fetch()` calls inside a screen — always use a hook from `@mulah/shared-logic`
