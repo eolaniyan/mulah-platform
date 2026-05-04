@@ -56,6 +56,7 @@ export {
 export {
   useCFA,
   useHealthScore,
+  useAnalyticsSummary,
   useCashflow,
   useCategoryTotals,
   useSpendingTrends,
