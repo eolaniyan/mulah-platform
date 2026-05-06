@@ -1,0 +1,20 @@
+{
+  "name": "@mulah/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2"
+  }
+}
+
