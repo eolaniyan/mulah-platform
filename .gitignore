@@ -4,3 +4,18 @@ __pycache__/
 .env
 uploads/
 *.csv
+
+# Node / JS
+node_modules/
+**/node_modules/
+dist/
+build/
+.turbo/
+.next/
+.expo/
+.expo-shared/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
